@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	black := player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish", 4)
-	white := player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish", 20)
+	black := player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish", 20)
+	white := player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish", 1)
 
 	game := game.NewGame(black, white, ui.NewConsoleUI())
 

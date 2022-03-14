@@ -1,40 +1,25 @@
 package player
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/uci"
+	"github.com/windler/chesspal/pkg/util"
 )
 
 type UCI struct {
-	engine     *uci.Engine
-	skillLevel int
+	engine *uci.Engine
 }
 
 func NewUCIPlayer(engine string, skillLevel int) *UCI {
-	eng, err := uci.New(engine)
-	if err != nil {
-		panic(err)
-	}
-
-	// uci.CmdSetOption{Name: "MultiPV", Value: "3"}
-	err = eng.Run(
-		uci.CmdUCI,
-		uci.CmdIsReady,
-		uci.CmdUCINewGame,
-		uci.CmdSetOption{Name: "Skill Level", Value: fmt.Sprintf("%d", skillLevel)},
-		uci.CmdSetOption{Name: "Threads", Value: "8"},
-	)
-
+	eng, err := util.CreateUCIEngine(engine, skillLevel, 4)
 	if err != nil {
 		panic(err)
 	}
 
 	return &UCI{
-		engine:     eng,
-		skillLevel: skillLevel,
+		engine: eng,
 	}
 }
 

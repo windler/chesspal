@@ -6,6 +6,8 @@ import (
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/uci"
 	"github.com/windler/chesspal/pkg/game"
+
+	"github.com/windler/chesspal/pkg/util"
 )
 
 type LastMove struct {
@@ -14,23 +16,10 @@ type LastMove struct {
 }
 
 func NewLastMoveEval(engine string) *LastMove {
-	eng, err := uci.New(engine)
+	eng, err := util.CreateUCIEngine(engine, 20, 8)
 	if err != nil {
 		panic(err)
 	}
-
-	err = eng.Run(
-		uci.CmdUCI,
-		uci.CmdIsReady,
-		uci.CmdUCINewGame,
-		uci.CmdSetOption{Name: "Skill Level", Value: "20"},
-		uci.CmdSetOption{Name: "Threads", Value: "8"},
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
 	return &LastMove{
 		engine: eng,
 	}
