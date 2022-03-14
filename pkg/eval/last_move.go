@@ -57,11 +57,13 @@ func (e *LastMove) Eval(g chess.Game) game.EvalResult {
 			result.Accuracy = game.EVAL_ACC_INACCURATE
 		}
 
-		result.BestMove = e.engine.SearchResults().BestMove.String()
 		result.Pawn = cp
 	} else {
 		result.IsForcedMate = true
 		result.ForcedMateIn = e.engine.SearchResults().Info.Score.Mate
+		if g.Position().Turn() == chess.Black {
+			result.ForcedMateIn = result.ForcedMateIn * -1
+		}
 	}
 	e.cpCurrent = cp
 

@@ -1,9 +1,6 @@
 package game
 
 import (
-	"context"
-	"sync"
-
 	"github.com/notnil/chess"
 )
 
@@ -21,7 +18,7 @@ type EvalEngine interface {
 type EvalResult struct {
 	Pawn         float64
 	Accuracy     EvalAccuracy
-	BestMove     string
+	BestMoves    []string
 	IsForcedMate bool
 	ForcedMateIn int
 }
@@ -29,11 +26,9 @@ type EvalResult struct {
 type EvalAccuracy string
 
 const (
-	EVAL_ACC_GOOD       EvalAccuracy = "Good"
 	EVAL_ACC_INACCURATE EvalAccuracy = "Inaccuracy"
 	EVAL_ACC_MISTAKE    EvalAccuracy = "Mistake"
 	EVAL_ACC_BLUNDER    EvalAccuracy = "Blunder"
-	EVAL_ACC_BEST       EvalAccuracy = "Best"
 )
 
 type Player interface {
@@ -42,8 +37,7 @@ type Player interface {
 }
 
 type UI interface {
-	Start(context.Context, chess.Game)
-	GetActionChannel() chan UIAction
+	Render(chess.Game, UIAction)
 }
 
 type UIAction struct {
@@ -62,14 +56,6 @@ func NewGame(black, white Player, uis ...UI) *Game {
 func (g *Game) Start(evalEngines ...EvalEngine) {
 	g.game = chess.NewGame()
 
-	wg := &sync.WaitGroup{}
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	for _, ui := range g.uis {
-		ui.Start(ctx, *g.game)
-	}
-
 	for g.game.Outcome() == chess.NoOutcome {
 		if g.game.Position().Turn() == chess.Black {
 			g.black.MakeMove(g.game)
@@ -78,14 +64,11 @@ func (g *Game) Start(evalEngines ...EvalEngine) {
 		}
 
 		move := g.game.Moves()[len(g.game.Moves())-1]
-		g.callEvalEngines(evalEngines, wg)
+		g.callEvalEngines(evalEngines)
 		g.callUIs(UIAction{
 			Move: move,
 		})
 	}
-
-	wg.Wait()
-	cancelFunc()
 
 	g.black.End()
 	g.white.End()
@@ -93,16 +76,14 @@ func (g *Game) Start(evalEngines ...EvalEngine) {
 
 func (g *Game) callUIs(action UIAction) {
 	for _, ui := range g.uis {
-		ui.GetActionChannel() <- action
+		ui.Render(*g.game, action)
 	}
 }
 
-func (g *Game) callEvalEngines(engines []EvalEngine, wg *sync.WaitGroup) {
+func (g *Game) callEvalEngines(engines []EvalEngine) {
 	for _, engine := range engines {
-		wg.Add(1)
 
 		go func(engine EvalEngine, game chess.Game) {
-			defer wg.Done()
 			evaluation := engine.Eval(game)
 
 			g.callUIs(UIAction{

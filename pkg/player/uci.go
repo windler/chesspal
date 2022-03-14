@@ -40,7 +40,7 @@ func NewUCIPlayer(engine string, skillLevel int) *UCI {
 
 func (p *UCI) MakeMove(game *chess.Game) {
 	cmdPos := uci.CmdPosition{Position: game.Position()}
-	cmdGo := uci.CmdGo{MoveTime: 1 * time.Second / 100}
+	cmdGo := uci.CmdGo{MoveTime: 500 * time.Millisecond}
 
 	if err := p.engine.Run(cmdPos, cmdGo); err != nil {
 		//TODO
@@ -51,6 +51,7 @@ func (p *UCI) MakeMove(game *chess.Game) {
 		//TODO
 		panic(err)
 	}
+
 }
 
 func (p *UCI) End() {
