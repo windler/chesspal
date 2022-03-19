@@ -33,6 +33,7 @@ const (
 
 type Player interface {
 	MakeMove(*chess.Game)
+	SetColor(chess.Color)
 	End()
 }
 
@@ -55,6 +56,10 @@ func NewGame(black, white Player, uis ...UI) *Game {
 
 func (g *Game) Start(evalEngines ...EvalEngine) {
 	g.game = chess.NewGame()
+	g.black.SetColor(chess.Black)
+	g.white.SetColor(chess.White)
+
+	g.callUIs(UIAction{})
 
 	for g.game.Outcome() == chess.NoOutcome {
 		if g.game.Position().Turn() == chess.Black {

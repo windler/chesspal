@@ -1,6 +1,7 @@
 package player
 
 import (
+	"log"
 	"time"
 
 	"github.com/notnil/chess"
@@ -15,7 +16,7 @@ type UCI struct {
 func NewUCIPlayer(engine string, skillLevel int) *UCI {
 	eng, err := util.CreateUCIEngine(engine, skillLevel, 4)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	return &UCI{
@@ -28,14 +29,16 @@ func (p *UCI) MakeMove(game *chess.Game) {
 	cmdGo := uci.CmdGo{MoveTime: 500 * time.Millisecond}
 
 	if err := p.engine.Run(cmdPos, cmdGo); err != nil {
-		//TODO
-		panic(err)
+		log.Fatal(err)
 	}
 	move := p.engine.SearchResults().BestMove
 	if err := game.Move(move); err != nil {
-		//TODO
-		panic(err)
+		log.Fatal(err)
 	}
+
+}
+
+func (p *UCI) SetColor(color chess.Color) {
 
 }
 

@@ -1,3 +1,6 @@
 .PHONY: run
 run:
-	go run ./cmd/chessman/main.go
+	go run ./cmd/chesspal/main.go
+
+frontend:
+	cd web/vue-frontend && npm run serve -- --port 3000
