@@ -5,7 +5,7 @@
     </v-card-title>
 
     <v-card-actions>
-      <v-btn color="primary" text> Show </v-btn>
+      <v-btn color="primary" text> EXPLORE </v-btn>
 
       <v-spacer></v-spacer>
 
@@ -32,7 +32,9 @@ export default {
 
   props: ["pgn"],
   data() {
-    return {};
+    return {
+      show: false
+    };
   },
 };
 </script>

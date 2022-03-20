@@ -12,15 +12,9 @@
             item-text="name"
             item-value="value"
             v-model="modes[0]"
-            v-on:input="$emit('changeMode', $event)"
+            v-on:input="$emit('changeMode', $event.value)"
+            return-object
           ></v-select>
-        </v-row>
-        <v-row>
-          <v-switch
-            v-model="speak"
-            label="Speak?"
-            v-on:input="$emit('changeSpeech', $event)"
-          />
         </v-row>
       </v-container>
     </v-card-actions>
@@ -33,7 +27,6 @@ export default {
 
   data() {
     return {
-      speak: true,
       modes: [
         {
           name: "None",

@@ -16,7 +16,6 @@ import (
 	"github.com/windler/chesspal/pkg/eval"
 	"github.com/windler/chesspal/pkg/game"
 	"github.com/windler/chesspal/pkg/player"
-	"github.com/windler/chesspal/pkg/ui"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -49,7 +48,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Static("/", "./web/frontend/public/")
+	e.Static("/", "./web/vue-frontend/dist/")
 
 	e.GET("/ws", func(c echo.Context) error {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -92,7 +91,7 @@ func main() {
 					game := game.NewGame(black, white, &WSUI{
 						ws:    ws,
 						mutex: &sync.Mutex{},
-					}, ui.NewConsoleUI())
+					})
 
 					if startMsg.Options.EvalMode == 1 {
 						evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish"))
@@ -160,6 +159,15 @@ func (u *WSUI) Render(game chess.Game, action game.UIAction) {
 				currentState.Pawn = 0
 			}
 		}
+	}
+
+	switch game.Outcome() {
+	case chess.BlackWon:
+		currentState.Pawn = 0
+	case chess.WhiteWon:
+		currentState.Pawn = 100
+	case chess.Draw:
+		currentState.Pawn = 50
 	}
 
 	if err := u.ws.WriteJSON(currentState); !errors.Is(err, nil) {

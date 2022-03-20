@@ -19,8 +19,16 @@
             item-text="name"
             item-value="value"
             v-model="players[0]"
-            v-on:input="$emit('modeChange', $event)"
+            v-on:input="$emit('modeChange', $event.value)"
+            return-object
           ></v-select>
+        </v-row>
+        <v-row>
+          <v-switch
+            v-model="speak"
+            label="Speak?"
+            v-on:change="$emit('speakChange', $event)"
+          />
         </v-row>
       </v-container>
     </v-card-actions>
@@ -37,6 +45,7 @@ export default {
   },
   data() {
     return {
+      speak: false,
       players: [
         {
           name: "Human",

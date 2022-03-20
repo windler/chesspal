@@ -18,18 +18,19 @@
               <ChessPlayer
                 v-on:nameChange="white.name = $event"
                 v-on:modeChange="white.mode = $event"
+                v-on:speakChange="white.speak = Boolean($event)"
                 color="white"
                 class="my-6"
               />
               <ChessPlayer
                 v-on:nameChange="black.name = $event"
                 v-on:modeChange="black.mode = $event"
+                v-on:speakChange="black.speak = Boolean($event)"
                 color="black"
                 class="my-6"
               />
               <EvaluationMode
                 v-on:changeMode="evalMode = $event"
-                v-on:changeSpeech="speak = $event"
                 class="my-6"
               />
             </v-sheet>
@@ -93,16 +94,23 @@ export default {
     black: {
       name: "Black",
       mode: 0,
+      speak: false,
     },
     white: {
       name: "White",
       mode: 0,
+      speak: false,
     },
     evalMode: 0,
-    speak: true,
     pgn: "",
   }),
   methods: {
+    speakMove: function (player, move) {
+      if (player.speak && !window.speechSynthesis.pending) {
+        this.speech.text = move;
+        window.speechSynthesis.speak(this.speech);
+      }
+    },
     startGame: function () {
       if (!this.started) {
         var msg = JSON.stringify({
@@ -167,15 +175,13 @@ export default {
         that.lastMove = data.lastMove;
         if (data.turn == "b") {
           that.movesWhite.push({ notation: that.lastMove });
+          that.speakMove(that.white, that.lastMove);
         } else {
           that.movesBlack.push({ notation: that.lastMove });
-        }
-        if (that.speak) {
-          that.speech.text = that.lastMove;
-          window.speechSynthesis.speak(that.speech);
+          that.speakMove(that.black, that.lastMove);
         }
 
-        that.pgn = data.pgn
+        that.pgn = data.pgn;
       }
     };
 
