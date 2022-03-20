@@ -2,6 +2,7 @@ package eval
 
 import (
 	"math"
+	"time"
 
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/uci"
@@ -30,7 +31,7 @@ func (e *LastMove) Eval(g chess.Game) game.EvalResult {
 
 	e.engine.Run(uci.CmdStop)
 
-	e.engine.Run(uci.CmdPosition{Position: g.Position()}, uci.CmdGo{Depth: 17})
+	e.engine.Run(uci.CmdPosition{Position: g.Position()}, uci.CmdGo{Depth: 17, MoveTime: 500 * time.Millisecond})
 	cp := float64(e.engine.SearchResults().Info.Score.CP) / 100.0
 	if g.Position().Turn() == chess.Black {
 		cp = cp * -1

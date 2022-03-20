@@ -61,7 +61,7 @@ export default {
     };
   },
   created: function () {
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 8; i++) {
       this.players.push({
         name: "AI skill " + (i + 1),
         value: i + 1,
