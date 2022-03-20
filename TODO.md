@@ -13,3 +13,4 @@
 [] show game result/state
 [] add resign and draw buttons
 [] add new game support 
+[] add opening book
