@@ -19,6 +19,7 @@
                 v-on:nameChange="white.name = $event"
                 v-on:modeChange="white.mode = $event"
                 v-on:speakChange="white.speak = Boolean($event)"
+                :locked="started"
                 color="white"
                 class="my-6"
               />
@@ -26,11 +27,13 @@
                 v-on:nameChange="black.name = $event"
                 v-on:modeChange="black.mode = $event"
                 v-on:speakChange="black.speak = Boolean($event)"
+                :locked="started"
                 color="black"
                 class="my-6"
               />
               <EvaluationMode
                 v-on:changeMode="evalMode = $event"
+                :locked="started"
                 class="my-6"
               />
             </v-sheet>
@@ -46,7 +49,7 @@
 
           <v-col cols="12" sm="3">
             <v-sheet rounded="lg" min-height="268">
-              <EvalInfo :pawn="pawn" class="my-6" />
+              <EvalInfo :pawn="pawn" :show="evalMode == 1" class="my-6" />
               <MoveList
                 :movesBlack="movesBlack"
                 :movesWhite="movesWhite"
@@ -107,18 +110,17 @@ export default {
   methods: {
     speakMove: function (player, move) {
       if (player.speak && !window.speechSynthesis.pending) {
-
-        var text = move
-        text = text.replace(/K/g, 'King ')
-        text = text.replace(/N/g, 'Knight ')
-        text = text.replace(/B/g, 'Bishop ')
-        text = text.replace(/R/g, 'Rook ')
-        text = text.replace(/Q/g, 'Queen ')
-        text = text.replace(/x/g, ' takes ')
-        text = text.replace(/O-O-O/g, 'Long Castles ')
-        text = text.replace(/O-O/g, 'Castles ')
-        text = text.replace(/\+/g, ' Check ')
-        text = text.replace(/#/g, ' Check mate ')
+        var text = move;
+        text = text.replace(/K/g, "King ");
+        text = text.replace(/N/g, "Knight ");
+        text = text.replace(/B/g, "Bishop ");
+        text = text.replace(/R/g, "Rook ");
+        text = text.replace(/Q/g, "Queen ");
+        text = text.replace(/x/g, " takes ");
+        text = text.replace(/O-O-O/g, "Long Castles ");
+        text = text.replace(/O-O/g, "Castles ");
+        text = text.replace(/\+/g, " Check ");
+        text = text.replace(/#/g, " Check mate ");
 
         this.speech.text = text;
         window.speechSynthesis.speak(this.speech);

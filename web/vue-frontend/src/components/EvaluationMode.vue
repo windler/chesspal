@@ -11,8 +11,9 @@
             :items="modes"
             item-text="name"
             item-value="value"
-            v-model="modes[0]"
+            v-model="defaultVal"
             v-on:input="$emit('changeMode', $event.value)"
+            :readonly="locked"
             return-object
           ></v-select>
         </v-row>
@@ -24,9 +25,14 @@
 <script>
 export default {
   name: "EvaluationMode",
+  props: ["locked"],
 
   data() {
     return {
+      defaultVal: {
+        name: "None",
+        value: "0",
+      },
       modes: [
         {
           name: "None",

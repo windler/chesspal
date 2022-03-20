@@ -11,6 +11,7 @@
             v-on:input="$emit('nameChange', $event)"
             label="Name"
             v-bind:value="color.toUpperCase()"
+            :readonly="locked"
           ></v-text-field>
         </v-row>
         <v-row>
@@ -18,8 +19,9 @@
             :items="players"
             item-text="name"
             item-value="value"
-            v-model="players[0]"
+            v-model="defaultVal"
             v-on:input="$emit('modeChange', $event.value)"
+            :readonly="locked"
             return-object
           ></v-select>
         </v-row>
@@ -46,6 +48,10 @@ export default {
   data() {
     return {
       speak: false,
+      defaultVal: {
+        name: "Human",
+        value: "0",
+      },
       players: [
         {
           name: "Human",
@@ -62,6 +68,6 @@ export default {
       });
     }
   },
-  props: ["color"],
+  props: ["color", "locked"],
 };
 </script>
