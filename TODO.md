@@ -14,3 +14,6 @@
 [] add resign and draw buttons
 [] add new game support 
 [] add opening book
+[] server flags
+[] fix move analysis
+[] moves sometimes not announced and missing in list

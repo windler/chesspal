@@ -19,6 +19,8 @@ func NewUCIPlayer(engine string, skillLevel int) *UCI {
 		log.Fatal(err)
 	}
 
+	log.Printf("UCI player created with engine %s and skill level %d", engine, skillLevel)
+
 	return &UCI{
 		engine: eng,
 	}

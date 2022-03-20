@@ -43,6 +43,7 @@ type DGTEngine struct {
 }
 
 func NewDGTPlayer(engine *DGTEngine) *DGT {
+	log.Printf("DGT player created ")
 	return &DGT{
 		engine: engine,
 	}
