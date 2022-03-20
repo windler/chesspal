@@ -128,6 +128,7 @@ type GameState struct {
 var yellow = color.RGBA{255, 255, 0, 1}
 
 var currentState = &GameState{}
+var moveEncoder = chess.AlgebraicNotation{}
 
 func (u *WSUI) Render(game chess.Game, action game.UIAction) {
 	u.mutex.Lock()
@@ -145,7 +146,14 @@ func (u *WSUI) Render(game chess.Game, action game.UIAction) {
 			log.Printf("error occurred: %v", err)
 		}
 		currentState.SVGPosition = buf.String()
-		currentState.LastMove = action.Move.String()
+
+		moveIndex := len((game.Moves())) - 1
+		move := game.Moves()[len((game.Moves()))-1]
+
+		pos := game.Positions()[moveIndex]
+		moveEncoded := moveEncoder.Encode(pos, move)
+		currentState.LastMove = moveEncoded
+
 		currentState.Turn = game.Position().Turn().String()
 		currentState.PGN = game.String()
 	}

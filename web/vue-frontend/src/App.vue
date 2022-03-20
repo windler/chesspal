@@ -107,7 +107,20 @@ export default {
   methods: {
     speakMove: function (player, move) {
       if (player.speak && !window.speechSynthesis.pending) {
-        this.speech.text = move;
+
+        var text = move
+        text = text.replace(/K/g, 'King ')
+        text = text.replace(/N/g, 'Knight ')
+        text = text.replace(/B/g, 'Bishop ')
+        text = text.replace(/R/g, 'Rook ')
+        text = text.replace(/Q/g, 'Queen ')
+        text = text.replace(/x/g, ' takes ')
+        text = text.replace(/O-O-O/g, 'Long Castles ')
+        text = text.replace(/O-O/g, 'Castles ')
+        text = text.replace(/\+/g, ' Check ')
+        text = text.replace(/#/g, ' Check mate ')
+
+        this.speech.text = text;
         window.speechSynthesis.speak(this.speech);
       }
     },
