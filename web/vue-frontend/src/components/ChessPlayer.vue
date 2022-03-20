@@ -67,6 +67,12 @@ export default {
         value: i + 1,
       });
     }
+    for (i = 500; i < 2000; i += 100) {
+      this.players.push({
+        name: "ELO limit  " + i,
+        value: i,
+      });
+    }
   },
   props: ["color", "locked"],
 };

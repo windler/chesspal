@@ -17,7 +17,9 @@ type LastMove struct {
 }
 
 func NewLastMoveEval(engine string) *LastMove {
-	eng, err := util.CreateUCIEngine(engine, 20, 8)
+	eng, err := util.CreateUCIEngine(engine, util.EngineOptions{
+		SkillLevel: 20,
+	}, 8)
 	if err != nil {
 		panic(err)
 	}

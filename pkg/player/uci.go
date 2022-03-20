@@ -52,7 +52,16 @@ func NewUCIPlayer(engine string, level int) *UCI {
 		depth = 22
 		skill = 20
 	}
-	eng, err := util.CreateUCIEngine(engine, skill, 4)
+
+	elo := 0
+	if level > 8 {
+		elo = level
+	}
+
+	eng, err := util.CreateUCIEngine(engine, util.EngineOptions{
+		SkillLevel: skill,
+		ELO:        elo,
+	}, 4)
 	if err != nil {
 		log.Fatal(err)
 	}
