@@ -36,7 +36,7 @@ func (e *LastMove) Eval(g *chess.Game) game.EvalResult {
 
 	move := g.Moves()[len(g.Moves())-1]
 
-	e.engine.Run(uci.CmdPosition{Position: g.Position()}, uci.CmdGo{Depth: 17, MoveTime: 500 * time.Millisecond})
+	e.engine.Run(uci.CmdPosition{Position: g.Position()}, uci.CmdGo{Depth: 22, MoveTime: 500 * time.Millisecond})
 	cp := float64(e.engine.SearchResults().Info.Score.CP) / 100.0
 	if g.Position().Turn() == chess.Black {
 		cp = cp * -1

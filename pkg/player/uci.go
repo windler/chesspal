@@ -56,8 +56,8 @@ func NewUCIPlayer(engine string, level int) *UCI {
 	elo := 0
 	if level > 8 {
 		elo = level
-		depth = 15
-		ms = 1000
+		depth = 20
+		ms = 300
 	}
 
 	eng, err := util.CreateUCIEngine(engine, util.EngineOptions{
@@ -78,10 +78,9 @@ func NewUCIPlayer(engine string, level int) *UCI {
 }
 
 func (p *UCI) MakeMove(game *chess.Game) {
-	cmdPos := uci.CmdPosition{Position: game.Position()}
-	cmdGo := uci.CmdGo{MoveTime: time.Duration(p.ms) * time.Millisecond, Depth: p.depth}
+	cmds := []uci.Cmd{uci.CmdPosition{Position: game.Position()}, uci.CmdGo{MoveTime: time.Duration(p.ms) * time.Millisecond, Depth: p.depth}}
 
-	if err := p.engine.Run(cmdPos, cmdGo); err != nil {
+	if err := p.engine.Run(cmds...); err != nil {
 		log.Fatal(err)
 	}
 	move := p.engine.SearchResults().BestMove
