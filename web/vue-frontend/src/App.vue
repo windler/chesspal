@@ -126,7 +126,7 @@ export default {
 
         this.speech.text = text;
         
-        this.speech.rate = .2;
+        this.speech.rate = .4;
         window.speechSynthesis.speak(this.speech);
       }
     },
