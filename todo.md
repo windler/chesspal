@@ -20,3 +20,4 @@
 (B) allow pieces moved by "sliding" -> store old positions and undo omve if it was valid in old position
 (C) update readme
 (C) create proper installation mode (bundle)
+(A) end AI turn if board is in sync

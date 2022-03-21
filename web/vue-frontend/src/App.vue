@@ -111,6 +111,8 @@ export default {
     speakMove: function (player, move) {
       if (player.speak && !window.speechSynthesis.pending) {
         var text = move;
+        
+        text = text.replace(/.{1}/g, "$&-");
         text = text.replace(/K/g, "King ");
         text = text.replace(/N/g, "Knight ");
         text = text.replace(/B/g, "Bishop ");
@@ -123,6 +125,8 @@ export default {
         text = text.replace(/#/g, " Check mate ");
 
         this.speech.text = text;
+        
+        this.speech.rate = .2;
         window.speechSynthesis.speak(this.speech);
       }
     },
@@ -152,6 +156,7 @@ export default {
 
   created: function () {
     this.speech = new SpeechSynthesisUtterance();
+    this.voices = window.speechSynthesis.getVoices()
     this.speech.lang = "en";
 
     console.log("Starting connection to WebSocket Server");
