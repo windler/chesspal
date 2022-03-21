@@ -28,10 +28,12 @@ func NewLastMoveEval(engine string) *LastMove {
 	}
 }
 
-func (e *LastMove) Eval(g chess.Game) game.EvalResult {
+func (e *LastMove) Eval(g *chess.Game) game.EvalResult {
 	result := game.EvalResult{}
 
 	e.engine.Run(uci.CmdStop)
+
+	move := g.Moves()[len(g.Moves())-1]
 
 	e.engine.Run(uci.CmdPosition{Position: g.Position()}, uci.CmdGo{Depth: 17, MoveTime: 500 * time.Millisecond})
 	cp := float64(e.engine.SearchResults().Info.Score.CP) / 100.0
@@ -40,13 +42,18 @@ func (e *LastMove) Eval(g chess.Game) game.EvalResult {
 	}
 
 	if e.engine.SearchResults().Info.Score.Mate == 0 {
-		centiPawnLoss := math.Abs(math.Abs(e.cpCurrent) - math.Abs(cp))
+		centiPawnLoss := math.Abs(e.cpCurrent - cp)
+		acc := ""
 		if centiPawnLoss >= 3 {
-			result.Accuracy = game.EVAL_ACC_BLUNDER
+			acc = string(game.EVAL_ACC_BLUNDER)
 		} else if centiPawnLoss >= 2 {
-			result.Accuracy = game.EVAL_ACC_MISTAKE
+			acc = string(game.EVAL_ACC_MISTAKE)
 		} else if centiPawnLoss >= 1 {
-			result.Accuracy = game.EVAL_ACC_INACCURATE
+			acc = string(game.EVAL_ACC_INACCURATE)
+		}
+
+		if acc != "" {
+			g.AddComment(move, acc)
 		}
 
 		result.Pawn = cp

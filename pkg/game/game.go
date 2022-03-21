@@ -12,12 +12,11 @@ type Game struct {
 }
 
 type EvalEngine interface {
-	Eval(chess.Game) EvalResult
+	Eval(*chess.Game) EvalResult
 }
 
 type EvalResult struct {
 	Pawn         float64
-	Accuracy     EvalAccuracy
 	BestMoves    []string
 	IsForcedMate bool
 	ForcedMateIn int
@@ -88,12 +87,12 @@ func (g *Game) callUIs(action UIAction) {
 func (g *Game) callEvalEngines(engines []EvalEngine) {
 	for _, engine := range engines {
 
-		go func(engine EvalEngine, game chess.Game) {
+		go func(engine EvalEngine, game *chess.Game) {
 			evaluation := engine.Eval(game)
 
 			g.callUIs(UIAction{
 				Evaluation: &evaluation,
 			})
-		}(engine, *g.game)
+		}(engine, g.game)
 	}
 }

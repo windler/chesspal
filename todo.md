@@ -1,7 +1,7 @@
 # TODO
 
 (B) auto reconnect
-(A) show board setup on connect
+(C) show board setup on connect
 (C) show connected devices and status
 (A) undo moves
 (B) show hint

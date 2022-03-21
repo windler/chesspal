@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/fatih/color"
 	"github.com/gosuri/uilive"
 	"github.com/notnil/chess"
 	"github.com/windler/chesspal/pkg/game"
@@ -54,14 +53,14 @@ func (c *Console) Render(g chess.Game, action game.UIAction) {
 		c.lastEvaluation = *action.Evaluation
 
 		acc := ""
-		switch c.lastEvaluation.Accuracy {
-		case game.EVAL_ACC_BLUNDER:
-			acc = color.RedString(fmt.Sprintf("%v", c.lastEvaluation.Accuracy))
-		case game.EVAL_ACC_INACCURATE:
-			acc = fmt.Sprintf("%v", c.lastEvaluation.Accuracy)
-		case game.EVAL_ACC_MISTAKE:
-			acc = color.YellowString(fmt.Sprintf("%v", c.lastEvaluation.Accuracy))
-		}
+		// switch c.lastEvaluation.Accuracy {
+		// case game.EVAL_ACC_BLUNDER:
+		// 	acc = color.RedString(fmt.Sprintf("%v", c.lastEvaluation.Accuracy))
+		// case game.EVAL_ACC_INACCURATE:
+		// 	acc = fmt.Sprintf("%v", c.lastEvaluation.Accuracy)
+		// case game.EVAL_ACC_MISTAKE:
+		// 	acc = color.YellowString(fmt.Sprintf("%v", c.lastEvaluation.Accuracy))
+		// }
 		if c.lastEvaluation.IsForcedMate {
 			fmt.Fprintf(c.writer, "%s\nForced mate in %d\n%s%s\n", c.lastPosition, action.Evaluation.ForcedMateIn, c.lastStatus, c.lastResult)
 		} else {

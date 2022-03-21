@@ -119,10 +119,15 @@ type WSUI struct {
 type GameState struct {
 	SVGPosition string  `json:"svgPosition"`
 	Pawn        float64 `json:"pawn"`
-	Accuracy    string  `json:"accuracy"`
-	LastMove    string  `json:"lastMove"`
+	Moves       []Move  `json:"moves"`
 	Turn        string  `json:"turn"`
 	PGN         string  `json:"pgn"`
+}
+
+type Move struct {
+	Move     string `json:"move"`
+	Accuracy string `json:"accuracy"`
+	Color    string `json:"color"`
 }
 
 var yellow = color.RGBA{255, 255, 0, 1}
@@ -130,11 +135,11 @@ var yellow = color.RGBA{255, 255, 0, 1}
 var currentState = &GameState{}
 var moveEncoder = chess.AlgebraicNotation{}
 
-func (u *WSUI) Render(game chess.Game, action game.UIAction) {
+func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	u.mutex.Lock()
 	if currentState.SVGPosition == "" {
 		buf := bytes.NewBufferString("")
-		if err := image.SVG(buf, game.Position().Board()); err != nil {
+		if err := image.SVG(buf, g.Position().Board()); err != nil {
 			log.Printf("error occurred: %v", err)
 		}
 		currentState.SVGPosition = buf.String()
@@ -142,25 +147,36 @@ func (u *WSUI) Render(game chess.Game, action game.UIAction) {
 	if action.Move != nil {
 		buf := bytes.NewBufferString("")
 		mark := image.MarkSquares(yellow, action.Move.S1(), action.Move.S2())
-		if err := image.SVG(buf, game.Position().Board(), mark); err != nil {
+		if err := image.SVG(buf, g.Position().Board(), mark); err != nil {
 			log.Printf("error occurred: %v", err)
 		}
 		currentState.SVGPosition = buf.String()
 
-		moveIndex := len((game.Moves())) - 1
-		move := game.Moves()[len((game.Moves()))-1]
-
-		pos := game.Positions()[moveIndex]
-		moveEncoded := moveEncoder.Encode(pos, move)
-		currentState.LastMove = moveEncoded
-
-		currentState.Turn = game.Position().Turn().String()
-		currentState.PGN = game.String()
+		currentState.Turn = g.Position().Turn().String()
+		currentState.PGN = g.String()
 	}
+
+	moves := []Move{}
+	for moveIndex, m := range g.Moves() {
+		pos := g.Positions()[moveIndex]
+		moveEncoded := moveEncoder.Encode(pos, m)
+
+		accuracy := ""
+		if len(g.Comments()) >= moveIndex+1 && len(g.Comments()[moveIndex]) > 0 {
+			accuracy = g.Comments()[moveIndex][0]
+		}
+
+		moves = append(moves, Move{
+			Move:     moveEncoded,
+			Color:    pos.Turn().String(),
+			Accuracy: accuracy,
+		})
+	}
+
+	currentState.Moves = moves
 
 	if action.Evaluation != nil {
 		currentState.Pawn = action.Evaluation.Pawn + 50
-		currentState.Accuracy = string(action.Evaluation.Accuracy)
 		if action.Evaluation.IsForcedMate {
 			currentState.Pawn = 100
 			if action.Evaluation.ForcedMateIn < 0 {
@@ -169,7 +185,7 @@ func (u *WSUI) Render(game chess.Game, action game.UIAction) {
 		}
 	}
 
-	switch game.Outcome() {
+	switch g.Outcome() {
 	case chess.BlackWon:
 		currentState.Pawn = 0
 	case chess.WhiteWon:

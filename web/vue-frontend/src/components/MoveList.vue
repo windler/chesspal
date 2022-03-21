@@ -47,7 +47,7 @@ export default {
         return "red--text";
       }
       if (acc == "Inaccuracy") {
-        return "grey--text";
+        return "blue--text";
       }
       if (acc == "Mistake") {
         return "orange--text";

@@ -109,10 +109,12 @@ export default {
   }),
   methods: {
     speakMove: function (player, move) {
-      if (player.speak && !window.speechSynthesis.pending) {
+      if (player.speak && !window.speechSynthesis.pending && this.lastSpoken != move + player.name) {
         var text = move;
-        
-        text = text.replace(/.{1}/g, "$&-");
+
+        if (text.indexOf("-") == -1) {
+          text = text.replace(/.{1}/g, "$&-");
+        }
         text = text.replace(/K/g, "King ");
         text = text.replace(/N/g, "Knight ");
         text = text.replace(/B/g, "Bishop ");
@@ -125,9 +127,10 @@ export default {
         text = text.replace(/#/g, " Check mate ");
 
         this.speech.text = text;
-        
-        this.speech.rate = .4;
+
+        this.speech.rate = 0.4;
         window.speechSynthesis.speak(this.speech);
+        this.lastSpoken = move + player.name
       }
     },
     startGame: function () {
@@ -156,7 +159,7 @@ export default {
 
   created: function () {
     this.speech = new SpeechSynthesisUtterance();
-    this.voices = window.speechSynthesis.getVoices()
+    this.voices = window.speechSynthesis.getVoices();
     this.speech.lang = "en";
 
     console.log("Starting connection to WebSocket Server");
@@ -164,6 +167,7 @@ export default {
     var that = this;
 
     this.connection.onmessage = function (event) {
+      console.log(event.data);
       var data = JSON.parse(event.data);
       if (data.svgPosition != "") {
         that.currentPosition = data.svgPosition;
@@ -173,36 +177,37 @@ export default {
         that.pawn = data.pawn;
       }
 
-      if (data.accuracy != "") {
-        if (data.turn == "b") {
-          that.movesWhite = that.movesWhite.map(function (move) {
-            if (move.notation == data.lastMove) {
-              move.accuracy = data.accuracy;
-            }
-            return move;
-          });
+      var movesWhite = [];
+      var movesBlack = [];
+
+      data.moves.forEach((m) => {
+        var data = {
+          notation: m.move,
+          accuracy: m.accuracy,
+        };
+        if (m.color == "b") {
+          movesBlack.push(data);
         } else {
-          that.movesBlack = that.movesBlack.map(function (move) {
-            if (move.notation == data.lastMove) {
-              move.accuracy = data.accuracy;
-            }
-            return move;
-          });
+          movesWhite.push(data);
         }
+      });
+
+      that.movesWhite = movesWhite;
+      that.movesBlack = movesBlack;
+
+      if (data.turn == "b") {
+        that.speakMove(
+          that.white,
+          that.movesWhite[movesWhite.length - 1].notation
+        );
+      } else {
+        that.speakMove(
+          that.black,
+          that.movesBlack[movesBlack.length - 1].notation
+        );
       }
 
-      if (data.lastMove != that.lastMove) {
-        that.lastMove = data.lastMove;
-        if (data.turn == "b") {
-          that.movesWhite.push({ notation: that.lastMove });
-          that.speakMove(that.white, that.lastMove);
-        } else {
-          that.movesBlack.push({ notation: that.lastMove });
-          that.speakMove(that.black, that.lastMove);
-        }
-
-        that.pgn = data.pgn;
-      }
+      that.pgn = data.pgn;
     };
 
     this.connection.onopen = function () {
