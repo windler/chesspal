@@ -13,22 +13,28 @@
       <v-row class="justify-center">
         <v-col cols="12" sm="6">
           <v-list dense>
-            <v-list-item
-              v-for="(move, index) in movesWhite"
-              :key="index"
+            <v-list-item v-for="(move, index) in movesWhite" :key="index"
               >{{ index + 1 }}:
-              <span :class="getTextColor(move.accuracy)">
-                {{ move.notation }}</span
-              ></v-list-item
-            >
+              <v-icon
+                :class="move.accuracy ? 'outlined' : ''"
+                :color="getAccColor(move.accuracy)"
+              >
+                {{ getAccIcon(move.accuracy) }}</v-icon
+              >
+              &nbsp; {{ move.notation }}
+            </v-list-item>
           </v-list>
         </v-col>
         <v-col cols="12" sm="6">
           <v-list dense>
             <v-list-item v-for="(move, index) in movesBlack" :key="index"
-              ><span :class="getTextColor(move.accuracy)">
-                {{ move.notation }}</span
-              ></v-list-item
+              ><v-icon
+                :class="move.accuracy ? 'outlined' : ''"
+                :color="getAccColor(move.accuracy)"
+              >
+                {{ getAccIcon(move.accuracy) }}</v-icon
+              >
+              &nbsp;{{ move.notation }}</v-list-item
             >
           </v-list>
         </v-col>
@@ -42,15 +48,27 @@ export default {
   name: "MoveList",
   props: ["movesBlack", "movesWhite"],
   methods: {
-    getTextColor(acc) {
+    getAccIcon(acc) {
       if (acc == "Blunder") {
-        return "red--text";
+        return "fas fa-minus";
       }
       if (acc == "Inaccuracy") {
-        return "blue--text";
+        return "fas fa-question";
       }
       if (acc == "Mistake") {
-        return "orange--text";
+        return "fas fa-exclamation";
+      }
+      return "";
+    },
+    getAccColor(acc) {
+      if (acc == "Blunder") {
+        return "red";
+      }
+      if (acc == "Inaccuracy") {
+        return "blue";
+      }
+      if (acc == "Mistake") {
+        return "orange";
       }
       return "";
     },
@@ -60,3 +78,12 @@ export default {
   },
 };
 </script>
+
+<style>
+.v-icon.outlined {
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+}
+</style>

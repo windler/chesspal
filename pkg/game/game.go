@@ -87,7 +87,7 @@ func (g *Game) callUIs(action UIAction) {
 func (g *Game) callEvalEngines(engines []EvalEngine) {
 	for _, engine := range engines {
 
-		go func(engine EvalEngine, game *chess.Game) {
+		func(engine EvalEngine, game *chess.Game) {
 			evaluation := engine.Eval(game)
 
 			g.callUIs(UIAction{

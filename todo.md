@@ -15,8 +15,8 @@
 (C) add new game support 
 (C) add opening book
 (C) server flags 
-(A) fix move analysis
-(A) moves sometimes not announced and missing in list -> always send all moves with analysis to ui
+(A) fix move analysis {cm:2022-03-21}
+(A) moves sometimes not announced and missing in list -> always send all moves with analysis to ui {cm:2022-03-21}
 (B) allow pieces moved by "sliding" -> store old positions and undo omve if it was valid in old position
 (C) update readme
 (C) create proper installation mode (bundle)

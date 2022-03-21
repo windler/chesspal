@@ -157,6 +157,7 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	}
 
 	moves := []Move{}
+	//TODO add a GetComments function
 	for moveIndex, m := range g.Moves() {
 		pos := g.Positions()[moveIndex]
 		moveEncoded := moveEncoder.Encode(pos, m)
