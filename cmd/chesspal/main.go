@@ -30,9 +30,10 @@ type StartMessage struct {
 }
 
 type StartOptions struct {
-	White    Player `json:"white"`
-	Black    Player `json:"black"`
-	EvalMode int    `json:"evalMode"`
+	White      Player `json:"white"`
+	Black      Player `json:"black"`
+	EvalMode   int    `json:"evalMode"`
+	UpsideDown bool   `json:"upsideDown"`
 }
 
 type Player struct {
@@ -74,6 +75,7 @@ func main() {
 
 					if startMsg.Options.Black.Type == 0 || startMsg.Options.White.Type == 0 {
 						engine = player.NewDGTEngine()
+						engine.SetUpsideDown(startMsg.Options.UpsideDown)
 						engine.Start()
 					}
 					var white, black game.Player

@@ -36,6 +36,11 @@
                 :locked="started"
                 class="my-6"
               />
+              <SettingsCard
+                v-on:upsideDownChange="upsideDown = $event"
+                :locked="started"
+                class="my-6"
+              />
             </v-sheet>
           </v-col>
 
@@ -71,6 +76,7 @@ import EvalInfo from "./components/EvalInfo.vue";
 import MoveList from "./components/MoveList.vue";
 import ChessBoard from "./components/ChessBoard.vue";
 import PGNCard from "./components/PGNCard.vue";
+import SettingsCard from "./components/SettingsCard.vue";
 
 export default {
   name: "App",
@@ -82,10 +88,12 @@ export default {
     MoveList,
     ChessBoard,
     PGNCard,
+    SettingsCard
   },
 
   data: () => ({
     connection: null,
+    upsideDown: false,
     speech: null,
     lastMove: "",
     movesBlack: [],
@@ -147,6 +155,7 @@ export default {
               type: Number(this.black.mode),
             },
             evalMode: Number(this.evalMode),
+            upsideDown: Boolean(this.upsideDown),
           },
         });
 
@@ -167,7 +176,6 @@ export default {
     var that = this;
 
     this.connection.onmessage = function (event) {
-      console.log(event.data);
       var data = JSON.parse(event.data);
       if (data.svgPosition != "") {
         that.currentPosition = data.svgPosition;

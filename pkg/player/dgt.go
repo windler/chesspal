@@ -3,6 +3,7 @@ package player
 import (
 	"io"
 	"log"
+	"math"
 	"sync"
 
 	"github.com/jacobsa/go-serial/serial"
@@ -36,10 +37,11 @@ type DGT struct {
 }
 
 type DGTEngine struct {
-	io     io.ReadWriteCloser
-	wg     *sync.WaitGroup
-	colors []chess.Color
-	game   *chess.Game
+	io         io.ReadWriteCloser
+	wg         *sync.WaitGroup
+	colors     []chess.Color
+	game       *chess.Game
+	upsideDown bool
 }
 
 func NewDGTPlayer(engine *DGTEngine) *DGT {
@@ -58,6 +60,9 @@ func NewDGTEngine() *DGTEngine {
 
 func (p *DGTEngine) AddColor(color chess.Color) {
 	p.colors = append(p.colors, color)
+}
+func (p *DGTEngine) SetUpsideDown(ud bool) {
+	p.upsideDown = ud
 }
 
 func (p *DGTEngine) MakeMove(game *chess.Game) {
@@ -104,7 +109,7 @@ func (p *DGTEngine) readLoop() {
 			if msgType == DGT_MSG_TYPE_FIELD_UPDATE {
 				p.io.Write([]byte{DGT_SEND_BRD})
 			} else if msgType == DGT_MSG_TYPE_BOARD_DUMP {
-				pieces := getChessBoard(buf[0:n])
+				pieces := p.getChessBoard(buf[0:n])
 				moves := p.game.Position().ValidMoves()
 				for _, move := range moves {
 					pos := *p.game.Clone().Position()
@@ -126,7 +131,6 @@ func (p *DGTEngine) readLoop() {
 
 					if valid && piecesFound == len(sMap) {
 						p.game.Move(move)
-						log.Printf("Found valid move: %s\n", move)
 						p.wg.Done()
 						break
 					}
@@ -149,7 +153,7 @@ func (p *DGT) End() {
 
 }
 
-func getChessBoard(msg []byte) []PieceOnSqaure {
+func (p *DGTEngine) getChessBoard(msg []byte) []PieceOnSqaure {
 	result := []PieceOnSqaure{}
 	if len(msg) != DGT_MSG_TYPE_BOARD_DUMP_SIZE || msg[0] != DGT_MSG_TYPE_BOARD_DUMP {
 		return result
@@ -157,8 +161,8 @@ func getChessBoard(msg []byte) []PieceOnSqaure {
 
 	for i := 0; i < 64; i++ {
 		result = append(result, PieceOnSqaure{
-			Piece:  getPiece(int(msg[3+i])),
-			Sqaure: getSquare(i),
+			Piece:  p.getPiece(int(msg[3+i])),
+			Sqaure: p.getSquare(i),
 		})
 	}
 
@@ -178,14 +182,19 @@ type PieceOnSqaure struct {
 	Sqaure chess.Square
 }
 
-func getSquare(i int) chess.Square {
+func (p *DGTEngine) getSquare(i int) chess.Square {
 	fileIndex := int(i & 0x07)
 	rankIndex := 7 - int((i&0x38)>>3)
+
+	if p.upsideDown {
+		rankIndex = int(math.Abs(float64(rankIndex) - 7))
+		fileIndex = int(math.Abs(float64(fileIndex) - 7))
+	}
 
 	return chess.Square((int(rankIndex) * 8) + int(fileIndex))
 }
 
-func getPiece(i int) chess.Piece {
+func (p *DGTEngine) getPiece(i int) chess.Piece {
 	if i == DGT_EMPTY {
 		return chess.NoPiece
 	}
