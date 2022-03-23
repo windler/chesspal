@@ -47,7 +47,7 @@
           <v-col cols="12" sm="6">
             <v-sheet min-height="70vh" rounded="lg">
               <v-row justify="center">
-                <ChessBoard :svg="currentPosition" class="my-6" />
+                <ChessBoard :svg="currentPosition" :fen="fen" class="my-6" />
               </v-row>
             </v-sheet>
           </v-col>
@@ -88,7 +88,7 @@ export default {
     MoveList,
     ChessBoard,
     PGNCard,
-    SettingsCard
+    SettingsCard,
   },
 
   data: () => ({
@@ -114,10 +114,15 @@ export default {
     },
     evalMode: 0,
     pgn: "",
+    fen: "r5nr/ppk2pp1/7p/2Bp1b2/8/7P/PPP1PPP1/RN2KB1R",
   }),
   methods: {
     speakMove: function (player, move) {
-      if (player.speak && !window.speechSynthesis.pending && this.lastSpoken != move + player.name) {
+      if (
+        player.speak &&
+        !window.speechSynthesis.pending &&
+        this.lastSpoken != move + player.name
+      ) {
         var text = move;
 
         if (text.indexOf("-") == -1) {
@@ -138,7 +143,7 @@ export default {
 
         this.speech.rate = 0.4;
         window.speechSynthesis.speak(this.speech);
-        this.lastSpoken = move + player.name
+        this.lastSpoken = move + player.name;
       }
     },
     startGame: function () {
@@ -216,6 +221,8 @@ export default {
       }
 
       that.pgn = data.pgn;
+      that.fen = data.fen;
+      console.log(that.fen)
     };
 
     this.connection.onopen = function () {

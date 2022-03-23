@@ -124,6 +124,7 @@ type GameState struct {
 	Moves       []Move  `json:"moves"`
 	Turn        string  `json:"turn"`
 	PGN         string  `json:"pgn"`
+	FEN         string  `json:"fen"`
 }
 
 type Move struct {
@@ -139,9 +140,10 @@ var moveEncoder = chess.AlgebraicNotation{}
 
 func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	u.mutex.Lock()
+	colors := image.SquareColors(color.RGBA{R: 0xC7, G: 0xC6, B: 0xC1}, color.RGBA{R: 0x82, G: 0x82, B: 0x82})
 	if currentState.SVGPosition == "" {
 		buf := bytes.NewBufferString("")
-		if err := image.SVG(buf, g.Position().Board()); err != nil {
+		if err := image.SVG(buf, g.Position().Board(), colors); err != nil {
 			log.Printf("error occurred: %v", err)
 		}
 		currentState.SVGPosition = buf.String()
@@ -149,7 +151,7 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	if action.Move != nil {
 		buf := bytes.NewBufferString("")
 		mark := image.MarkSquares(yellow, action.Move.S1(), action.Move.S2())
-		if err := image.SVG(buf, g.Position().Board(), mark); err != nil {
+		if err := image.SVG(buf, g.Position().Board(), mark, colors); err != nil {
 			log.Printf("error occurred: %v", err)
 		}
 		currentState.SVGPosition = buf.String()
@@ -196,6 +198,8 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	case chess.Draw:
 		currentState.Pawn = 50
 	}
+
+	currentState.FEN = g.Position().Board().String()
 
 	if err := u.ws.WriteJSON(currentState); !errors.Is(err, nil) {
 		log.Printf("error occurred: %v", err)
