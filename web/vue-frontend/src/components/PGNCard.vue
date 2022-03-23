@@ -21,6 +21,9 @@
         <v-card-text>
           {{ pgn }}
         </v-card-text>
+        <v-btn class="ma-2" icon @click="importLichess()"
+          ><v-icon>fas fa-magnifying-glass-chart</v-icon>
+        </v-btn>
       </div>
     </v-expand-transition>
   </v-card>
@@ -31,9 +34,24 @@ export default {
   name: "PGNCard",
 
   props: ["pgn"],
+  methods: {
+    importLichess: async function () {
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "pgn=" + this.pgn,
+      };
+      const response = await fetch(
+        "https://lichess.org/api/import",
+        requestOptions
+      );
+      const data = await response.json()
+      window.open(data.url, "_blank");
+    },
+  },
   data() {
     return {
-      show: false
+      show: false,
     };
   },
 };

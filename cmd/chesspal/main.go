@@ -82,12 +82,12 @@ func main() {
 					if startMsg.Options.Black.Type == 0 {
 						black = player.NewDGTPlayer(engine)
 					} else {
-						black = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish", startMsg.Options.Black.Type)
+						black = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_13", startMsg.Options.Black.Type)
 					}
 					if startMsg.Options.White.Type == 0 {
 						white = player.NewDGTPlayer(engine)
 					} else {
-						white = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish", startMsg.Options.White.Type)
+						white = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_13", startMsg.Options.White.Type)
 					}
 
 					game := game.NewGame(black, white, &WSUI{
@@ -96,7 +96,7 @@ func main() {
 					})
 
 					if startMsg.Options.EvalMode == 1 {
-						evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish"))
+						evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish_14"))
 					}
 
 					game.Start(evals...)
