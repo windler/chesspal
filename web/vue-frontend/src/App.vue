@@ -47,7 +47,12 @@
           <v-col cols="12" sm="6">
             <v-sheet min-height="70vh" rounded="lg">
               <v-row justify="center">
-                <ChessBoard :svg="currentPosition" :fen="fen" class="my-6" />
+                <ChessBoard
+                  :svg="currentPosition"
+                  :fen="fen"
+                  :outcome="outcome"
+                  class="my-6"
+                />
               </v-row>
             </v-sheet>
           </v-col>
@@ -59,6 +64,11 @@
                 :movesBlack="movesBlack"
                 :movesWhite="movesWhite"
                 class="my-6"
+              />
+              <GameActions
+                v-on:undoMoves="undoMoves($event)"
+                v-on:draw="draw()"
+                v-on:resign="resign()"
               />
               <PGNCard :pgn="pgn" class="my-6" />
             </v-sheet>
@@ -77,6 +87,7 @@ import MoveList from "./components/MoveList.vue";
 import ChessBoard from "./components/ChessBoard.vue";
 import PGNCard from "./components/PGNCard.vue";
 import SettingsCard from "./components/SettingsCard.vue";
+import GameActions from "./components/GameActions.vue";
 
 export default {
   name: "App",
@@ -89,6 +100,7 @@ export default {
     ChessBoard,
     PGNCard,
     SettingsCard,
+    GameActions,
   },
 
   data: () => ({
@@ -115,6 +127,7 @@ export default {
     evalMode: 0,
     pgn: "",
     fen: "r5nr/ppk2pp1/7p/2Bp1b2/8/7P/PPP1PPP1/RN2KB1R",
+    outcome: "*",
   }),
   methods: {
     speakMove: function (player, move) {
@@ -150,7 +163,7 @@ export default {
       if (!this.started) {
         var msg = JSON.stringify({
           action: "start",
-          options: {
+          startOptions: {
             white: {
               name: this.white.name,
               type: Number(this.white.mode),
@@ -168,6 +181,33 @@ export default {
         console.log(msg);
         this.started = true;
       }
+    },
+    undoMoves: function (n) {
+      var msg = JSON.stringify({
+        action: "undo",
+        undoMoves: n,
+      });
+
+      this.connection.send(msg);
+      console.log(msg);
+    },
+    draw: function () {
+      var msg = JSON.stringify({
+        action: "result",
+        result: "draw",
+      });
+
+      this.connection.send(msg);
+      console.log(msg);
+    },
+    resign: function () {
+      var msg = JSON.stringify({
+        action: "result",
+        result: "resign",
+      });
+
+      this.connection.send(msg);
+      console.log(msg);
     },
   },
 
@@ -222,7 +262,8 @@ export default {
 
       that.pgn = data.pgn;
       that.fen = data.fen;
-      console.log(that.fen)
+      that.outcome = data.outcome;
+      console.log(that.fen);
     };
 
     this.connection.onopen = function () {

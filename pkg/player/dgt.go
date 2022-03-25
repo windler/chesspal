@@ -103,7 +103,7 @@ func (p *DGTEngine) readLoop() {
 			log.Printf("error reading bytes from serial port: %s\n", err)
 		}
 
-		if p.game != nil && n > 0 {
+		if p.game != nil && n > 0 && p.game.Outcome() == chess.NoOutcome {
 			msgType := getMessageType(buf[0:n])
 
 			if msgType == DGT_MSG_TYPE_FIELD_UPDATE {

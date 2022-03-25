@@ -13,7 +13,7 @@ import (
 
 type LastMove struct {
 	engine        *uci.Engine
-	cpCurrent     float64
+	cps           map[string]float64
 	wasForcedMate bool
 }
 
@@ -26,6 +26,7 @@ func NewLastMoveEval(engine string) *LastMove {
 	}
 	return &LastMove{
 		engine: eng,
+		cps:    map[string]float64{},
 	}
 }
 
@@ -42,8 +43,12 @@ func (e *LastMove) Eval(g *chess.Game) game.EvalResult {
 		cp = cp * -1
 	}
 
+	cpPreviousMove := float64(0)
+	if len(g.Moves()) > 1 {
+		cpPreviousMove = e.cps[g.Moves()[len(g.Moves())-2].String()]
+	}
 	if e.engine.SearchResults().Info.Score.Mate == 0 {
-		centiPawnLoss := math.Abs(e.cpCurrent - cp)
+		centiPawnLoss := math.Abs(cpPreviousMove - cp)
 		acc := ""
 		if e.wasForcedMate {
 			e.wasForcedMate = false
@@ -71,7 +76,7 @@ func (e *LastMove) Eval(g *chess.Game) game.EvalResult {
 		}
 		e.wasForcedMate = true
 	}
-	e.cpCurrent = cp
+	e.cps[g.Moves()[len(g.Moves())-1].String()] = cp
 
 	return result
 }

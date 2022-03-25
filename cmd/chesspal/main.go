@@ -20,13 +20,17 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
-type Message struct {
-	Action string `json:"action"`
-}
+const (
+	MSG_START        string = "start"
+	MSG_UNDO_N_MOVES string = "undo"
+	MSG_SET_RESULT   string = "result"
+)
 
-type StartMessage struct {
-	Message
-	Options StartOptions `json:"options"`
+type Message struct {
+	Action    string       `json:"action"`
+	Options   StartOptions `json:"startOptions"`
+	UndoMoves int          `json:"undoMoves"`
+	Result    string       `json:"result"`
 }
 
 type StartOptions struct {
@@ -42,6 +46,7 @@ type Player struct {
 }
 
 var started = false
+var g *game.Game
 
 func main() {
 	e := echo.New()
@@ -61,49 +66,65 @@ func main() {
 		defer ws.Close()
 
 		for {
-			startMsg := &StartMessage{}
-			err := ws.ReadJSON(&startMsg)
+			msg := &Message{}
+			err := ws.ReadJSON(&msg)
 			if !errors.Is(err, nil) {
 				log.Printf("error occurred: %v", err)
 				break
 			}
 
-			if !started {
-				go func() {
-					var engine *player.DGTEngine
-					evals := []game.EvalEngine{}
+			switch msg.Action {
+			case MSG_START:
+				if !started {
+					go func() {
+						var engine *player.DGTEngine
+						evals := []game.EvalEngine{}
 
-					if startMsg.Options.Black.Type == 0 || startMsg.Options.White.Type == 0 {
-						engine = player.NewDGTEngine()
-						engine.SetUpsideDown(startMsg.Options.UpsideDown)
-						engine.Start()
-					}
-					var white, black game.Player
-					if startMsg.Options.Black.Type == 0 {
-						black = player.NewDGTPlayer(engine)
-					} else {
-						black = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_13", startMsg.Options.Black.Type)
-					}
-					if startMsg.Options.White.Type == 0 {
-						white = player.NewDGTPlayer(engine)
-					} else {
-						white = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_13", startMsg.Options.White.Type)
-					}
+						if msg.Options.Black.Type == 0 || msg.Options.White.Type == 0 {
+							engine = player.NewDGTEngine()
+							engine.SetUpsideDown(msg.Options.UpsideDown)
+							engine.Start()
+						}
+						var white, black game.Player
+						if msg.Options.Black.Type == 0 {
+							black = player.NewDGTPlayer(engine)
+						} else {
+							black = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.Black.Type)
+						}
+						if msg.Options.White.Type == 0 {
+							white = player.NewDGTPlayer(engine)
+						} else {
+							white = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.White.Type)
+						}
 
-					game := game.NewGame(black, white, &WSUI{
-						ws:    ws,
-						mutex: &sync.Mutex{},
-					})
+						g = game.NewGame(black, white, &WSUI{
+							ws:    ws,
+							mutex: &sync.Mutex{},
+						})
 
-					if startMsg.Options.EvalMode == 1 {
-						evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish_14"))
-					}
+						if msg.Options.EvalMode == 1 {
+							evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish_14"))
+						}
 
-					game.Start(evals...)
+						g.Start(evals...)
 
-				}()
-				started = true
+					}()
+					started = true
+				}
+
+			case MSG_UNDO_N_MOVES:
+				if msg.UndoMoves > 0 {
+					g.UndoMoves(msg.UndoMoves)
+				}
+			case MSG_SET_RESULT:
+				switch msg.Result {
+				case "draw":
+					g.Draw()
+				case "resign":
+					g.Resign()
+				}
 			}
+
 		}
 
 		return nil
@@ -125,6 +146,7 @@ type GameState struct {
 	Turn        string  `json:"turn"`
 	PGN         string  `json:"pgn"`
 	FEN         string  `json:"fen"`
+	Outcome     string  `json:"outcome"`
 }
 
 type Move struct {
@@ -141,16 +163,16 @@ var moveEncoder = chess.AlgebraicNotation{}
 func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	u.mutex.Lock()
 	colors := image.SquareColors(color.RGBA{R: 0xC7, G: 0xC6, B: 0xC1}, color.RGBA{R: 0x82, G: 0x82, B: 0x82})
-	if currentState.SVGPosition == "" {
+	if len(g.Moves()) == 0 {
 		buf := bytes.NewBufferString("")
 		if err := image.SVG(buf, g.Position().Board(), colors); err != nil {
 			log.Printf("error occurred: %v", err)
 		}
 		currentState.SVGPosition = buf.String()
-	}
-	if action.Move != nil {
+	} else {
+		move := g.Moves()[len(g.Moves())-1]
 		buf := bytes.NewBufferString("")
-		mark := image.MarkSquares(yellow, action.Move.S1(), action.Move.S2())
+		mark := image.MarkSquares(yellow, move.S1(), move.S2())
 		if err := image.SVG(buf, g.Position().Board(), mark, colors); err != nil {
 			log.Printf("error occurred: %v", err)
 		}
@@ -200,6 +222,8 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	}
 
 	currentState.FEN = g.Position().Board().String()
+
+	currentState.Outcome = g.Outcome().String()
 
 	if err := u.ws.WriteJSON(currentState); !errors.Is(err, nil) {
 		log.Printf("error occurred: %v", err)

@@ -96,3 +96,29 @@ func (g *Game) callEvalEngines(engines []EvalEngine) {
 		}(engine, g.game)
 	}
 }
+
+func (g *Game) UndoMoves(n int) error {
+	err := g.game.UndoMoves(n)
+	move := g.game.Moves()[len(g.game.Moves())-1]
+	g.callUIs(UIAction{
+		Move: move,
+	})
+
+	return err
+}
+
+func (g *Game) Draw() {
+	g.game.Draw(chess.DrawOffer)
+	move := g.game.Moves()[len(g.game.Moves())-1]
+	g.callUIs(UIAction{
+		Move: move,
+	})
+}
+
+func (g *Game) Resign() {
+	g.game.Resign(g.game.Position().Turn())
+	move := g.game.Moves()[len(g.game.Moves())-1]
+	g.callUIs(UIAction{
+		Move: move,
+	})
+}
