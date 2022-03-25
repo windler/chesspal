@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"sync"
+	"time"
 
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/notnil/chess"
@@ -37,11 +38,12 @@ type DGT struct {
 }
 
 type DGTEngine struct {
-	io         io.ReadWriteCloser
-	wg         *sync.WaitGroup
-	colors     []chess.Color
-	game       *chess.Game
-	upsideDown bool
+	io             io.ReadWriteCloser
+	wg             *sync.WaitGroup
+	colors         []chess.Color
+	game           *chess.Game
+	upsideDown     bool
+	lastUpdateTime time.Time
 }
 
 func NewDGTPlayer(engine *DGTEngine) *DGT {
@@ -95,6 +97,8 @@ func (p *DGTEngine) Start() {
 
 }
 
+const delayMs = 200
+
 func (p *DGTEngine) readLoop() {
 	for {
 		buf := make([]byte, 1024)
@@ -102,43 +106,89 @@ func (p *DGTEngine) readLoop() {
 		if err != nil {
 			log.Printf("error reading bytes from serial port: %s\n", err)
 		}
+		p.lastUpdateTime = time.Now()
 
-		if p.game != nil && n > 0 && p.game.Outcome() == chess.NoOutcome {
-			msgType := getMessageType(buf[0:n])
+		// delay move a bit to allow "sliding" of pieces on board
+		time.AfterFunc(delayMs*time.Millisecond, func() {
+			if p.lastUpdateTime.Add(delayMs * time.Millisecond).After(time.Now()) {
+				return
+			}
 
-			if msgType == DGT_MSG_TYPE_FIELD_UPDATE {
-				p.io.Write([]byte{DGT_SEND_BRD})
-			} else if msgType == DGT_MSG_TYPE_BOARD_DUMP {
-				pieces := p.getChessBoard(buf[0:n])
-				moves := p.game.Position().ValidMoves()
-				for _, move := range moves {
-					pos := *p.game.Clone().Position()
-					sMap := pos.Update(move).Board().SquareMap()
+			if p.game != nil && n > 0 && p.game.Outcome() == chess.NoOutcome {
+				msgType := getMessageType(buf[0:n])
 
-					valid := true
-					piecesFound := 0
+				if msgType == DGT_MSG_TYPE_FIELD_UPDATE {
+					p.io.Write([]byte{DGT_SEND_BRD})
+				} else if msgType == DGT_MSG_TYPE_BOARD_DUMP {
+					pieces := p.getChessBoard(buf[0:n])
+					// moved := false
 
-					for _, p := range pieces {
-						if p.Piece.Type() == chess.NoPieceType {
-							continue
-						}
-						if sMap[p.Sqaure] != p.Piece {
-							valid = false
+					moves := p.game.Position().ValidMoves()
+					for _, move := range moves {
+						if p.isValidMoveInPostion(move, *p.game.Clone().Position(), pieces) {
+							p.game.Move(move)
+							p.wg.Done()
+							// moved = true
 							break
 						}
-						piecesFound = piecesFound + 1
 					}
 
-					if valid && piecesFound == len(sMap) {
-						p.game.Move(move)
-						p.wg.Done()
-						break
-					}
+					// posCnt := len(p.game.Positions())
+					// look in last positions for valid move in order to allow "sliding" pieces on the dgt board
+					// we must not actually move but only undo move so that next "regular move will catch this move"
+					// if !moved && posCnt > 0 {
+					// 	moves := p.game.Positions()[posCnt-1].ValidMoves()
+					// 	for _, move := range moves {
+					// 		if p.isValidMoveInPostion(move, *p.game.Positions()[posCnt-1], pieces) {
+					// 			p.game.UndoMoves(1)
+					// 			p.game.Move(move)
+					// 			p.wg.Done()
+					// 			moved = true
+					// 			break
+					// 		}
+					// 	}
+					// }
 
+					// also look in second last position because AI could already make a move
+					// if !moved && posCnt > 1 {
+					// 	moves := p.game.Positions()[posCnt-2].ValidMoves()
+					// 	for _, move := range moves {
+					// 		if p.isValidMoveInPostion(move, *p.game.Positions()[posCnt-2], pieces) {
+					// 			p.game.UndoMoves(2)
+					// 			p.game.Move(move)
+					// 			p.wg.Done()
+					// 			moved = true
+					// 			break
+					// 		}
+					// 	}
+					// }
 				}
 			}
-		}
+		})
 	}
+}
+
+func (p *DGTEngine) isValidMoveInPostion(move *chess.Move, pos chess.Position, pieces []PieceOnSqaure) bool {
+	sMap := pos.Update(move).Board().SquareMap()
+
+	valid := true
+	piecesFound := 0
+
+	for _, p := range pieces {
+		if p.Piece.Type() == chess.NoPieceType {
+			continue
+		}
+		if sMap[p.Sqaure] != p.Piece {
+			valid = false
+			break
+		}
+		piecesFound = piecesFound + 1
+	}
+
+	if valid && piecesFound == len(sMap) {
+		return true
+	}
+	return false
 }
 
 func (p *DGT) SetColor(color chess.Color) {
