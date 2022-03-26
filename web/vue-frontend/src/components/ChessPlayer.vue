@@ -11,7 +11,7 @@
             v-on:input="$emit('nameChange', $event)"
             label="Name"
             v-bind:value="color.toUpperCase()"
-            :readonly="locked"
+            :disabled="locked"
           ></v-text-field>
         </v-row>
         <v-row>
@@ -21,7 +21,7 @@
             item-value="value"
             v-model="defaultVal"
             v-on:input="$emit('modeChange', $event.value)"
-            :readonly="locked"
+            :disabled="locked"
             return-object
           ></v-select>
         </v-row>

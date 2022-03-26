@@ -33,7 +33,6 @@
             item-value="value"
             v-model="defaultVal"
             v-on:input="$emit('changeMode', $event.value)"
-            :readonly="locked"
             return-object
           ></v-select>
         </v-col>

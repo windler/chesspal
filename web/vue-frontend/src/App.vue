@@ -180,7 +180,6 @@ export default {
 
         this.connection.send(msg);
         console.log(msg);
-        this.started = true;
       }
     },
     undoMoves: function (n) {
@@ -222,8 +221,13 @@ export default {
     var that = this;
 
     this.connection.onmessage = function (event) {
-      console.log(event.data);
       var data = JSON.parse(event.data);
+
+      if (data.started) {
+        that.started = true;
+        return
+      }
+
       if (data.svgPosition != "") {
         that.currentPosition = data.svgPosition;
       }

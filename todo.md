@@ -4,7 +4,7 @@
 (C) show board setup on connect
 (C) show connected devices and status
 (A) undo moves
-(B) show hint
+(B) show hint {cm:2022-03-26}
 (C) change board visualization
 (C) add eval modes
 (B) pgn -> lichess {cm:2022-03-23}

@@ -1,21 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"errors"
-	"image/color"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/notnil/chess"
-	"github.com/notnil/chess/image"
 	"github.com/windler/chesspal/pkg/eval"
 	"github.com/windler/chesspal/pkg/game"
 	"github.com/windler/chesspal/pkg/player"
+	"github.com/windler/chesspal/pkg/ui"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -49,6 +45,8 @@ var started = false
 var g *game.Game
 
 func main() {
+	wsUI := ui.NewWS()
+
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -65,6 +63,11 @@ func main() {
 		}
 		defer ws.Close()
 
+		wsUI.AddWebsocket(ws)
+		if started {
+			sendGameStarted(ws)
+		}
+
 		for {
 			msg := &Message{}
 			err := ws.ReadJSON(&msg)
@@ -76,40 +79,9 @@ func main() {
 			switch msg.Action {
 			case MSG_START:
 				if !started {
-					go func() {
-						var engine *player.DGTEngine
-						evals := []game.EvalEngine{}
-
-						if msg.Options.Black.Type == 0 || msg.Options.White.Type == 0 {
-							engine = player.NewDGTEngine()
-							engine.SetUpsideDown(msg.Options.UpsideDown)
-							engine.Start()
-						}
-						var white, black game.Player
-						if msg.Options.Black.Type == 0 {
-							black = player.NewDGTPlayer(engine)
-						} else {
-							black = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.Black.Type)
-						}
-						if msg.Options.White.Type == 0 {
-							white = player.NewDGTPlayer(engine)
-						} else {
-							white = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.White.Type)
-						}
-
-						g = game.NewGame(black, white, &WSUI{
-							ws:    ws,
-							mutex: &sync.Mutex{},
-						})
-
-						if msg.Options.EvalMode == 1 {
-							evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish_14"))
-						}
-
-						g.Start(evals...)
-
-					}()
+					go startGame(msg, wsUI)
 					started = true
+					sendGameStarted(ws)
 				}
 
 			case MSG_UNDO_N_MOVES:
@@ -134,116 +106,42 @@ func main() {
 
 }
 
-type WSUI struct {
-	ws    *websocket.Conn
-	mutex *sync.Mutex
+type Started struct {
+	Started bool `json:"started"`
 }
 
-type GameState struct {
-	SVGPosition     string  `json:"svgPosition"`
-	SVGNextBestMove string  `json:"svgNextBestMove"`
-	Pawn            float64 `json:"pawn"`
-	Moves           []Move  `json:"moves"`
-	Turn            string  `json:"turn"`
-	PGN             string  `json:"pgn"`
-	FEN             string  `json:"fen"`
-	Outcome         string  `json:"outcome"`
-}
-
-type Move struct {
-	Move     string `json:"move"`
-	Accuracy string `json:"accuracy"`
-	Color    string `json:"color"`
-}
-
-var yellow = color.RGBA{255, 255, 0, 1}
-var green = color.RGBA{0, 90, 0, 1}
-
-var currentState = &GameState{}
-var moveEncoder = chess.AlgebraicNotation{}
-
-func (u *WSUI) Render(g chess.Game, action game.UIAction) {
-	u.mutex.Lock()
-	colors := image.SquareColors(color.RGBA{R: 0xC7, G: 0xC6, B: 0xC1}, color.RGBA{R: 0x82, G: 0x82, B: 0x82})
-	if len(g.Moves()) == 0 {
-		buf := bytes.NewBufferString("")
-		if err := image.SVG(buf, g.Position().Board(), colors); err != nil {
-			log.Printf("error occurred: %v", err)
-		}
-		currentState.SVGPosition = buf.String()
-	} else {
-		move := g.Moves()[len(g.Moves())-1]
-		buf := bytes.NewBufferString("")
-		mark := image.MarkSquares(yellow, move.S1(), move.S2())
-		if err := image.SVG(buf, g.Position().Board(), mark, colors); err != nil {
-			log.Printf("error occurred: %v", err)
-		}
-		currentState.SVGPosition = buf.String()
-
-		currentState.Turn = g.Position().Turn().String()
-		currentState.PGN = g.String()
-	}
-
-	moves := []Move{}
-	//TODO add a GetComments function
-	for moveIndex, m := range g.Moves() {
-		pos := g.Positions()[moveIndex]
-		moveEncoded := moveEncoder.Encode(pos, m)
-
-		accuracy := ""
-		if len(g.Comments()) >= moveIndex+1 && len(g.Comments()[moveIndex]) > 0 {
-			accuracy = g.Comments()[moveIndex][0]
-		}
-
-		moves = append(moves, Move{
-			Move:     moveEncoded,
-			Color:    pos.Turn().String(),
-			Accuracy: accuracy,
-		})
-	}
-
-	currentState.Moves = moves
-
-	if action.Evaluation != nil {
-		currentState.Pawn = action.Evaluation.Pawn + 50
-		if action.Evaluation.IsForcedMate {
-			currentState.Pawn = 100
-			if action.Evaluation.ForcedMateIn < 0 {
-				currentState.Pawn = 0
-			}
-		}
-
-		if len(action.Evaluation.BestMoves) > 0 {
-			buf := bytes.NewBufferString("")
-
-			nextBestMove := action.Evaluation.BestMoves[0]
-			move := g.Moves()[len(g.Moves())-1]
-
-			markLast := image.MarkSquares(yellow, move.S1(), move.S2())
-			markBest := image.MarkSquares(green, nextBestMove.S1(), nextBestMove.S2())
-
-			if err := image.SVG(buf, g.Position().Board(), markLast, markBest, colors); err != nil {
-				log.Printf("error occurred: %v", err)
-			}
-			currentState.SVGNextBestMove = buf.String()
-		}
-	}
-
-	switch g.Outcome() {
-	case chess.BlackWon:
-		currentState.Pawn = 0
-	case chess.WhiteWon:
-		currentState.Pawn = 100
-	case chess.Draw:
-		currentState.Pawn = 50
-	}
-
-	currentState.FEN = g.Position().Board().String()
-
-	currentState.Outcome = g.Outcome().String()
-
-	if err := u.ws.WriteJSON(currentState); !errors.Is(err, nil) {
+func sendGameStarted(ws *websocket.Conn) {
+	if err := ws.WriteJSON(&Started{Started: true}); !errors.Is(err, nil) {
 		log.Printf("error occurred: %v", err)
 	}
-	u.mutex.Unlock()
+}
+
+func startGame(msg *Message, ui game.UI) {
+	var engine *player.DGTEngine
+	evals := []game.EvalEngine{}
+
+	if msg.Options.Black.Type == 0 || msg.Options.White.Type == 0 {
+		engine = player.NewDGTEngine()
+		engine.SetUpsideDown(msg.Options.UpsideDown)
+		engine.Start()
+	}
+	var white, black game.Player
+	if msg.Options.Black.Type == 0 {
+		black = player.NewDGTPlayer(engine)
+	} else {
+		black = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.Black.Type)
+	}
+	if msg.Options.White.Type == 0 {
+		white = player.NewDGTPlayer(engine)
+	} else {
+		white = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.White.Type)
+	}
+
+	g = game.NewGame(black, white, ui)
+
+	if msg.Options.EvalMode == 1 {
+		evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish_14"))
+	}
+
+	g.Start(evals...)
 }
