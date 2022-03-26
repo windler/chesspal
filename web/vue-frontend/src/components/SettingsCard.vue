@@ -11,6 +11,7 @@
             v-model="upsideDown"
             label="Invert sides of DGT board?"
             v-on:change="$emit('upsideDownChange', $event)"
+            :readonly="locked"
           />
         </v-row>
       </v-container>

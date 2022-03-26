@@ -1,54 +1,61 @@
 <template>
-  <v-card
-    variant="outlined"
-    min-height="400px"
-    max-height="400px"
-    class="overflow-y-auto"
-  >
-    <v-card-title primary-title class="justify-center">
-      <v-icon color="grey">fa fa-list</v-icon>
-    </v-card-title>
+  <v-card variant="outlined" min-height="300px" max-height="300px" >
+    <div id="moveListContainer" class="overflow-y-auto" style="height: 300px">
+      <v-card-title primary-title class="justify-center">
+        <v-icon color="grey">fa fa-list</v-icon>
+      </v-card-title>
 
-    <v-container>
-      <v-row class="justify-center">
-        <v-col cols="12" sm="6">
-          <v-list dense>
-            <v-list-item v-for="(move, index) in movesWhite" :key="index"
-              >{{ index + 1 }}:
-              <v-icon
-                :class="move.accuracy ? 'outlined' : ''"
-                :color="getAccColor(move.accuracy)"
+      <v-container>
+        <v-row class="justify-center">
+          <v-col cols="12" sm="6">
+            <v-list dense>
+              <v-list-item v-for="(move, index) in movesWhite" :key="index"
+                >{{ index + 1 }}:
+                <v-icon
+                  :class="move.accuracy && showEvaluation ? 'outlined' : ''"
+                  :color="getAccColor(move.accuracy)"
+                >
+                  {{ getAccIcon(move.accuracy) }}</v-icon
+                >
+                &nbsp; {{ move.notation }}
+              </v-list-item>
+            </v-list>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-list dense>
+              <v-list-item v-for="(move, index) in movesBlack" :key="index"
+                ><v-icon
+                  :class="move.accuracy && showEvaluation ? 'outlined' : ''"
+                  :color="getAccColor(move.accuracy)"
+                >
+                  {{ getAccIcon(move.accuracy) }}</v-icon
+                >
+                &nbsp;{{ move.notation }}</v-list-item
               >
-                {{ getAccIcon(move.accuracy) }}</v-icon
-              >
-              &nbsp; {{ move.notation }}
-            </v-list-item>
-          </v-list>
-        </v-col>
-        <v-col cols="12" sm="6">
-          <v-list dense>
-            <v-list-item v-for="(move, index) in movesBlack" :key="index"
-              ><v-icon
-                :class="move.accuracy ? 'outlined' : ''"
-                :color="getAccColor(move.accuracy)"
-              >
-                {{ getAccIcon(move.accuracy) }}</v-icon
-              >
-              &nbsp;{{ move.notation }}</v-list-item
-            >
-          </v-list>
-        </v-col>
-      </v-row>
-    </v-container>
+            </v-list>
+          </v-col>
+        </v-row>
+      </v-container>
+    </div>
   </v-card>
 </template>
 
 <script>
 export default {
   name: "MoveList",
-  props: ["movesBlack", "movesWhite"],
+  props: ["movesBlack", "movesWhite", "showEvaluation"],
+  watch: {
+    movesWhite: function () {
+      var container = this.$el.querySelector("#moveListContainer");
+      container.scrollTop = container.scrollHeight;
+    },
+  },
   methods: {
     getAccIcon(acc) {
+      if (!this.showEvaluation) {
+        return "";
+      }
+
       if (acc == "Blunder") {
         return "fas fa-minus";
       }
@@ -61,6 +68,10 @@ export default {
       return "";
     },
     getAccColor(acc) {
+      if (!this.showEvaluation) {
+        return "";
+      }
+
       if (acc == "Blunder") {
         return "red";
       }

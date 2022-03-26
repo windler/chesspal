@@ -140,13 +140,14 @@ type WSUI struct {
 }
 
 type GameState struct {
-	SVGPosition string  `json:"svgPosition"`
-	Pawn        float64 `json:"pawn"`
-	Moves       []Move  `json:"moves"`
-	Turn        string  `json:"turn"`
-	PGN         string  `json:"pgn"`
-	FEN         string  `json:"fen"`
-	Outcome     string  `json:"outcome"`
+	SVGPosition     string  `json:"svgPosition"`
+	SVGNextBestMove string  `json:"svgNextBestMove"`
+	Pawn            float64 `json:"pawn"`
+	Moves           []Move  `json:"moves"`
+	Turn            string  `json:"turn"`
+	PGN             string  `json:"pgn"`
+	FEN             string  `json:"fen"`
+	Outcome         string  `json:"outcome"`
 }
 
 type Move struct {
@@ -156,6 +157,7 @@ type Move struct {
 }
 
 var yellow = color.RGBA{255, 255, 0, 1}
+var green = color.RGBA{0, 90, 0, 1}
 
 var currentState = &GameState{}
 var moveEncoder = chess.AlgebraicNotation{}
@@ -209,6 +211,21 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 			if action.Evaluation.ForcedMateIn < 0 {
 				currentState.Pawn = 0
 			}
+		}
+
+		if len(action.Evaluation.BestMoves) > 0 {
+			buf := bytes.NewBufferString("")
+
+			nextBestMove := action.Evaluation.BestMoves[0]
+			move := g.Moves()[len(g.Moves())-1]
+
+			markLast := image.MarkSquares(yellow, move.S1(), move.S2())
+			markBest := image.MarkSquares(green, nextBestMove.S1(), nextBestMove.S2())
+
+			if err := image.SVG(buf, g.Position().Board(), markLast, markBest, colors); err != nil {
+				log.Printf("error occurred: %v", err)
+			}
+			currentState.SVGNextBestMove = buf.String()
 		}
 	}
 

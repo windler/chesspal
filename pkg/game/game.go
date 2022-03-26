@@ -17,7 +17,7 @@ type EvalEngine interface {
 
 type EvalResult struct {
 	Pawn         float64
-	BestMoves    []string
+	BestMoves    []chess.Move
 	IsForcedMate bool
 	ForcedMateIn int
 }

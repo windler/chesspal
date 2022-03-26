@@ -31,11 +31,6 @@
                 color="black"
                 class="my-6"
               />
-              <EvaluationMode
-                v-on:changeMode="evalMode = $event"
-                :locked="started"
-                class="my-6"
-              />
               <SettingsCard
                 v-on:upsideDownChange="upsideDown = $event"
                 :locked="started"
@@ -48,9 +43,14 @@
             <v-sheet min-height="70vh" rounded="lg">
               <v-row justify="center">
                 <ChessBoard
-                  :svg="currentPosition"
+                  :svg="
+                    nextBestPosition != '' && showHint
+                      ? nextBestPosition
+                      : currentPosition
+                  "
                   :fen="fen"
                   :outcome="outcome"
+                  :pgn="pgn" 
                   class="my-6"
                 />
               </v-row>
@@ -63,14 +63,16 @@
               <MoveList
                 :movesBlack="movesBlack"
                 :movesWhite="movesWhite"
+                :showEvaluation="evalMode == 1"
                 class="my-6"
               />
               <GameActions
                 v-on:undoMoves="undoMoves($event)"
                 v-on:draw="draw()"
                 v-on:resign="resign()"
+                v-on:showHint="showHint = true"
+                v-on:changeMode="evalMode = $event"
               />
-              <PGNCard :pgn="pgn" class="my-6" />
             </v-sheet>
           </v-col>
         </v-row>
@@ -81,11 +83,9 @@
 
 <script>
 import ChessPlayer from "./components/ChessPlayer.vue";
-import EvaluationMode from "./components/EvaluationMode.vue";
 import EvalInfo from "./components/EvalInfo.vue";
 import MoveList from "./components/MoveList.vue";
 import ChessBoard from "./components/ChessBoard.vue";
-import PGNCard from "./components/PGNCard.vue";
 import SettingsCard from "./components/SettingsCard.vue";
 import GameActions from "./components/GameActions.vue";
 
@@ -94,16 +94,15 @@ export default {
 
   components: {
     ChessPlayer,
-    EvaluationMode,
     EvalInfo,
     MoveList,
     ChessBoard,
-    PGNCard,
     SettingsCard,
     GameActions,
   },
 
   data: () => ({
+    showHint: true,
     connection: null,
     upsideDown: false,
     speech: null,
@@ -113,7 +112,9 @@ export default {
     connected: false,
     started: false,
     currentPosition: "",
+    nextBestPosition: "",
     pawn: 50.0,
+    turn: "w",
     black: {
       name: "Black",
       mode: 0,
@@ -172,7 +173,7 @@ export default {
               name: this.black.name,
               type: Number(this.black.mode),
             },
-            evalMode: Number(this.evalMode),
+            evalMode: 1, //always use eval but only show based on ui // Number(this.evalMode),
             upsideDown: Boolean(this.upsideDown),
           },
         });
@@ -221,9 +222,13 @@ export default {
     var that = this;
 
     this.connection.onmessage = function (event) {
+      console.log(event.data);
       var data = JSON.parse(event.data);
       if (data.svgPosition != "") {
         that.currentPosition = data.svgPosition;
+      }
+      if (data.svgNextBestMove != "") {
+        that.nextBestPosition = data.svgNextBestMove;
       }
 
       if (data.pawn !== 0.0) {
@@ -248,6 +253,12 @@ export default {
       that.movesWhite = movesWhite;
       that.movesBlack = movesBlack;
 
+      if (data.turn != that.turn) {
+        that.showHint = false;
+      }
+
+      that.turn = data.turn;
+
       if (data.turn == "b") {
         that.speakMove(
           that.white,
@@ -263,7 +274,6 @@ export default {
       that.pgn = data.pgn;
       that.fen = data.fen;
       that.outcome = data.outcome;
-      console.log(that.fen);
     };
 
     this.connection.onopen = function () {

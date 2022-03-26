@@ -10,6 +10,30 @@
       </div>
       <div v-html="svg" class="board">{{ svg }}</div>
     </div>
+
+    <v-divider class="ma-4"></v-divider>
+
+    <v-card-actions>
+      <v-btn color="primary" text> SHOW PGN </v-btn>
+
+      <v-spacer></v-spacer>
+
+      <v-btn icon @click="showPGN = !showPGN">
+        <v-icon>{{ showPGN ? "mdi-chevron-up" : "mdi-chevron-down" }}</v-icon>
+      </v-btn>
+    </v-card-actions>
+
+    <v-expand-transition>
+      <div v-show="showPGN">
+        <v-divider></v-divider>
+        <v-card-text>
+          {{ pgn }}
+        </v-card-text>
+        <v-btn class="ma-2" icon @click="importLichess()"
+          ><v-icon>fas fa-magnifying-glass-chart</v-icon>
+        </v-btn>
+      </div>
+    </v-expand-transition>
   </v-card>
 </template>
 
@@ -17,9 +41,26 @@
 export default {
   name: "ChessBoard",
 
-  props: ["svg", "fen", "outcome"],
+  props: ["svg", "fen", "outcome", "pgn"],
+  methods: {
+    importLichess: async function () {
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "pgn=" + this.pgn,
+      };
+      const response = await fetch(
+        "https://lichess.org/api/import",
+        requestOptions
+      );
+      const data = await response.json();
+      window.open(data.url, "_blank");
+    },
+  },
   data() {
-    return {};
+    return {
+      showPGN: false,
+    };
   },
 };
 </script>
@@ -42,6 +83,4 @@ export default {
   z-index: 10;
   background: rgba(0, 0, 0, 0.7);
 }
-
-
 </style>

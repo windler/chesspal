@@ -76,6 +76,9 @@ func (e *LastMove) Eval(g *chess.Game) game.EvalResult {
 		}
 		e.wasForcedMate = true
 	}
+
+	result.BestMoves = []chess.Move{*e.engine.SearchResults().BestMove}
+
 	e.cps[g.Moves()[len(g.Moves())-1].String()] = cp
 
 	return result
