@@ -1,0 +1,27 @@
+address: :8080
+web: ./web/vue-frontend/dist/
+dgtPort: /dev/ttyACM0
+engines:
+  stockfish_14: /home/windler/projects/chess/chesspal/bin/stockfish_14
+  komodo_12: /home/windler/projects/chess/chesspal/bin/komodo-12.1.1
+bots:
+  - name: Noob
+    engine: komodo_12
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - Skill=1
+  - name: Adrian 3
+    engine: komodo_12
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - Skill=3
+eval:
+  engine: stockfish_14
+  depth: 20
+  threads: 4
+  moveTimeMs: 500
+  options: []

@@ -50,31 +50,27 @@ export default {
       speak: false,
       defaultVal: {
         name: "Human",
-        value: "0",
+        value: 0,
       },
       players: [
         {
           name: "Human",
-          value: "0",
+          value: 0,
         },
       ],
     };
   },
-  created: function () {
-    for (var i = 500; i < 2000; i += 100) {
-      this.players.push({
-        name: "ELO limit  " + i,
-        value: i,
-      });
-    }
-
-    for (i = 0; i < 8; i++) {
-      this.players.push({
-        name: "AI skill " + (i + 1),
-        value: i + 1,
-      });
-    }
+  watch: {
+    bots: function () {
+      for (var i = 0; i < this.bots.length; i++) {
+        this.players.push({
+          name: this.bots[i].name,
+          value: i+1,
+        });
+      }
+    },
   },
-  props: ["color", "locked"],
+
+  props: ["color", "locked", "bots"],
 };
 </script>

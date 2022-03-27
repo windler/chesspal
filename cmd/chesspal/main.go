@@ -2,8 +2,11 @@ package main
 
 import (
 	"errors"
+	"flag"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -13,6 +16,7 @@ import (
 	"github.com/windler/chesspal/pkg/game"
 	"github.com/windler/chesspal/pkg/player"
 	"github.com/windler/chesspal/pkg/ui"
+	"gopkg.in/yaml.v3"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -42,16 +46,53 @@ type Player struct {
 	Type int    `json:"type"`
 }
 
+type Config struct {
+	Address string              `yaml:"address"`
+	Web     string              `yaml:"web"`
+	DgtPort string              `yaml:"dgtPort"`
+	Engines map[string]string   `yaml:"engines"`
+	Bots    []player.BotOptions `yaml:"bots"`
+	Eval    Eval                `yaml:"eval"`
+}
+
+type Eval struct {
+	Engine     string   `yaml:"engine"`
+	Depth      int      `yaml:"depth"`
+	Threads    int      `yaml:"threads"`
+	MoveTimeMs int      `yaml:"moveTimeMs"`
+	Options    []string `yaml:"options"`
+}
+
 var started = false
 var g *game.Game
 var engine *player.DGTEngine
 var currentBoard chess.Board
 
+type WSResponse struct {
+	Bots []player.BotOptions `json:"bots"`
+}
+
 func main() {
+	var configPath string
+	flag.StringVar(&configPath, "config", "/home/windler/projects/chess/chesspal/configs/chesspal.yaml", "Path to config")
+
+	filename, _ := filepath.Abs(configPath)
+	yamlFile, err := ioutil.ReadFile(filename)
+
+	if err != nil {
+		panic(err)
+	}
+
+	config := &Config{}
+	err = yaml.Unmarshal(yamlFile, config)
+	if err != nil {
+		panic(err)
+	}
+
 	wsUI := ui.NewWS()
 
 	engine = player.NewDGTEngine()
-	engine.Start()
+	engine.Start(config.DgtPort)
 
 	go func() {
 		for board := range engine.PostionChannel() {
@@ -68,7 +109,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Static("/", "./web/vue-frontend/dist/")
+	e.Static("/", config.Web)
 
 	e.GET("/ws", func(c echo.Context) error {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -78,6 +119,10 @@ func main() {
 			log.Println(err)
 		}
 		defer ws.Close()
+
+		if err := ws.WriteJSON(WSResponse{Bots: config.Bots}); !errors.Is(err, nil) {
+			log.Printf("error occurred: %v", err)
+		}
 
 		wsUI.AddWebsocket(ws)
 		if started {
@@ -95,7 +140,7 @@ func main() {
 			switch msg.Action {
 			case MSG_START:
 				if !started {
-					go startGame(msg, wsUI)
+					go startGame(msg, wsUI, *config)
 					started = true
 					sendGameStarted(ws)
 				}
@@ -118,7 +163,7 @@ func main() {
 		return nil
 	})
 
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(config.Address))
 
 }
 
@@ -132,7 +177,7 @@ func sendGameStarted(ws *websocket.Conn) {
 	}
 }
 
-func startGame(msg *Message, ui game.UI) {
+func startGame(msg *Message, ui game.UI, cfg Config) {
 	evals := []game.EvalEngine{}
 
 	engine.SetUpsideDown(msg.Options.UpsideDown)
@@ -141,18 +186,30 @@ func startGame(msg *Message, ui game.UI) {
 	if msg.Options.Black.Type == 0 {
 		black = player.NewDGTPlayer(engine)
 	} else {
-		black = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.Black.Type)
+		i := msg.Options.Black.Type - 1
+		options := cfg.Bots[i]
+		options.Path = cfg.Engines[options.Engine]
+		black = player.NewUCIPlayer(options)
 	}
 	if msg.Options.White.Type == 0 {
 		white = player.NewDGTPlayer(engine)
 	} else {
-		white = player.NewUCIPlayer("/home/windler/projects/chess/chesspal/bin/stockfish_14", msg.Options.White.Type)
+		i := msg.Options.White.Type - 1
+		options := cfg.Bots[i]
+		options.Path = cfg.Engines[options.Engine]
+		white = player.NewUCIPlayer(options)
 	}
 
 	g = game.NewGame(black, white, ui)
 
 	if msg.Options.EvalMode == 1 {
-		evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish_14"))
+		evals = append(evals, eval.NewLastMoveEval(
+			cfg.Engines[cfg.Eval.Engine],
+			cfg.Eval.Options,
+			cfg.Eval.Threads,
+			cfg.Eval.Depth,
+			cfg.Eval.MoveTimeMs,
+		))
 	}
 
 	g.Start(currentBoard.String(), evals...)

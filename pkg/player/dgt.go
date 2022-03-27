@@ -79,9 +79,9 @@ func (p *DGTEngine) MakeMove(game *chess.Game) {
 	p.wg.Wait()
 }
 
-func (p *DGTEngine) Start() {
+func (p *DGTEngine) Start(port string) {
 	options := serial.OpenOptions{
-		PortName:        "/dev/ttyACM0",
+		PortName:        port,
 		BaudRate:        9600,
 		DataBits:        8,
 		StopBits:        1,

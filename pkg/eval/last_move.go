@@ -15,18 +15,20 @@ type LastMove struct {
 	engine        *uci.Engine
 	cps           map[string]float64
 	wasForcedMate bool
+	depth         int
+	ms            int
 }
 
-func NewLastMoveEval(engine string) *LastMove {
-	eng, err := util.CreateUCIEngine(engine, util.EngineOptions{
-		SkillLevel: 20,
-	}, 8)
+func NewLastMoveEval(engine string, options []string, threads, depth, moveTimeMs int) *LastMove {
+	eng, err := util.CreateUCIEngine(engine, options, threads)
 	if err != nil {
 		panic(err)
 	}
 	return &LastMove{
 		engine: eng,
 		cps:    map[string]float64{},
+		depth:  depth,
+		ms:     moveTimeMs,
 	}
 }
 
@@ -37,7 +39,7 @@ func (e *LastMove) Eval(g *chess.Game) game.EvalResult {
 
 	move := g.Moves()[len(g.Moves())-1]
 
-	e.engine.Run(uci.CmdPosition{Position: g.Position()}, uci.CmdGo{Depth: 22, MoveTime: 500 * time.Millisecond})
+	e.engine.Run(uci.CmdPosition{Position: g.Position()}, uci.CmdGo{Depth: e.depth, MoveTime: time.Duration(e.ms) * time.Millisecond})
 	cp := float64(e.engine.SearchResults().Info.Score.CP) / 100.0
 	if g.Position().Turn() == chess.Black {
 		cp = cp * -1

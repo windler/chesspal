@@ -22,6 +22,7 @@
                 :locked="started"
                 color="white"
                 class="my-6"
+                :bots="bots"
               />
               <ChessPlayer
                 v-on:nameChange="black.name = $event"
@@ -30,6 +31,7 @@
                 :locked="started"
                 color="black"
                 class="my-6"
+                :bots="bots"
               />
               <SettingsCard
                 v-on:upsideDownChange="upsideDown = $event"
@@ -129,6 +131,7 @@ export default {
     pgn: "",
     fen: "r5nr/ppk2pp1/7p/2Bp1b2/8/7P/PPP1PPP1/RN2KB1R",
     outcome: "*",
+    bots: []
   }),
   methods: {
     speakMove: function (player, move) {
@@ -223,6 +226,11 @@ export default {
 
       this.connection.onmessage = function (event) {
         var data = JSON.parse(event.data);
+
+        if (data.bots != null) {
+          that.bots = data.bots;
+          return;
+        }
 
         if (data.started) {
           that.started = true;
