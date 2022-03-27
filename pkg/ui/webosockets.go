@@ -14,13 +14,18 @@ import (
 )
 
 type WSUI struct {
-	sockets []*websocket.Conn
-	mutex   *sync.Mutex
+	sockets      []*websocket.Conn
+	mutex        *sync.Mutex
+	currentState *GameState
 }
 
 func NewWS() *WSUI {
+	game := chess.NewGame()
 	return &WSUI{
 		mutex: &sync.Mutex{},
+		currentState: &GameState{
+			SVGPosition: getSVG(*game.Position().Board()),
+		},
 	}
 }
 
@@ -49,29 +54,20 @@ type Move struct {
 var yellow = color.RGBA{255, 255, 0, 1}
 var green = color.RGBA{0, 90, 0, 1}
 
-var currentState = &GameState{}
 var moveEncoder = chess.AlgebraicNotation{}
 
 func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	u.mutex.Lock()
-	colors := image.SquareColors(color.RGBA{R: 0xC7, G: 0xC6, B: 0xC1}, color.RGBA{R: 0x82, G: 0x82, B: 0x82})
 	if len(g.Moves()) == 0 {
-		buf := bytes.NewBufferString("")
-		if err := image.SVG(buf, g.Position().Board(), colors); err != nil {
-			log.Printf("error occurred: %v", err)
-		}
-		currentState.SVGPosition = buf.String()
+		u.currentState.SVGPosition = getSVG(*g.Position().Board())
 	} else {
 		move := g.Moves()[len(g.Moves())-1]
-		buf := bytes.NewBufferString("")
 		mark := image.MarkSquares(yellow, move.S1(), move.S2())
-		if err := image.SVG(buf, g.Position().Board(), mark, colors); err != nil {
-			log.Printf("error occurred: %v", err)
-		}
-		currentState.SVGPosition = buf.String()
 
-		currentState.Turn = g.Position().Turn().String()
-		currentState.PGN = g.String()
+		u.currentState.SVGPosition = getSVG(*g.Position().Board(), mark)
+
+		u.currentState.Turn = g.Position().Turn().String()
+		u.currentState.PGN = g.String()
 	}
 
 	moves := []Move{}
@@ -92,45 +88,40 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 		})
 	}
 
-	currentState.Moves = moves
+	u.currentState.Moves = moves
 
 	if action.Evaluation != nil {
-		currentState.Pawn = action.Evaluation.Pawn + 50
+		u.currentState.Pawn = action.Evaluation.Pawn + 50
 		if action.Evaluation.IsForcedMate {
-			currentState.Pawn = 100
+			u.currentState.Pawn = 100
 			if action.Evaluation.ForcedMateIn < 0 {
-				currentState.Pawn = 0
+				u.currentState.Pawn = 0
 			}
 		}
 
 		if len(action.Evaluation.BestMoves) > 0 {
-			buf := bytes.NewBufferString("")
-
 			nextBestMove := action.Evaluation.BestMoves[0]
 			move := g.Moves()[len(g.Moves())-1]
 
 			markLast := image.MarkSquares(yellow, move.S1(), move.S2())
 			markBest := image.MarkSquares(green, nextBestMove.S1(), nextBestMove.S2())
 
-			if err := image.SVG(buf, g.Position().Board(), markLast, markBest, colors); err != nil {
-				log.Printf("error occurred: %v", err)
-			}
-			currentState.SVGNextBestMove = buf.String()
+			u.currentState.SVGNextBestMove = getSVG(*g.Position().Board(), markLast, markBest)
 		}
 	}
 
 	switch g.Outcome() {
 	case chess.BlackWon:
-		currentState.Pawn = 0
+		u.currentState.Pawn = 0
 	case chess.WhiteWon:
-		currentState.Pawn = 100
+		u.currentState.Pawn = 100
 	case chess.Draw:
-		currentState.Pawn = 50
+		u.currentState.Pawn = 50
 	}
 
-	currentState.FEN = g.Position().Board().String()
+	u.currentState.FEN = g.Position().Board().String()
 
-	currentState.Outcome = g.Outcome().String()
+	u.currentState.Outcome = g.Outcome().String()
 
 	for _, ws := range u.sockets {
 		u.sendCurentState(ws)
@@ -138,8 +129,25 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	u.mutex.Unlock()
 }
 
+func getSVG(board chess.Board, opts ...func(*image.Encoder)) string {
+	colors := image.SquareColors(color.RGBA{R: 0xC7, G: 0xC6, B: 0xC1}, color.RGBA{R: 0x82, G: 0x82, B: 0x82})
+	o := []func(*image.Encoder){colors}
+
+	for _, opt := range opts {
+		o = append(o, opt)
+	}
+
+	buf := bytes.NewBufferString("")
+
+	if err := image.SVG(buf, &board, o...); err != nil {
+		log.Printf("error occurred: %v", err)
+	}
+
+	return buf.String()
+}
+
 func (u *WSUI) sendCurentState(ws *websocket.Conn) {
-	if err := ws.WriteJSON(currentState); !errors.Is(err, nil) {
+	if err := ws.WriteJSON(u.currentState); !errors.Is(err, nil) {
 		log.Printf("error occurred: %v", err)
 	}
 }
