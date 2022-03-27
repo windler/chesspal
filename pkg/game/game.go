@@ -1,6 +1,8 @@
 package game
 
 import (
+	"fmt"
+
 	"github.com/notnil/chess"
 )
 
@@ -53,8 +55,13 @@ func NewGame(black, white Player, uis ...UI) *Game {
 	}
 }
 
-func (g *Game) Start(evalEngines ...EvalEngine) {
-	g.game = chess.NewGame()
+func (g *Game) Start(fenString string, evalEngines ...EvalEngine) {
+	// TODO check castling availability
+	fen, err := chess.FEN(fmt.Sprintf("%s w KQkq - 0 1", fenString))
+	if err != nil {
+		panic(err)
+	}
+	g.game = chess.NewGame(fen)
 	g.black.SetColor(chess.Black)
 	g.white.SetColor(chess.White)
 

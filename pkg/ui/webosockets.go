@@ -151,3 +151,12 @@ func (u *WSUI) sendCurentState(ws *websocket.Conn) {
 		log.Printf("error occurred: %v", err)
 	}
 }
+
+func (u *WSUI) SendBoard(board chess.Board) {
+	u.currentState = &GameState{
+		SVGPosition: getSVG(board),
+	}
+	for _, ws := range u.sockets {
+		u.sendCurentState(ws)
+	}
+}

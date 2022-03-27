@@ -44,6 +44,7 @@ type DGTEngine struct {
 	game           *chess.Game
 	upsideDown     bool
 	lastUpdateTime time.Time
+	positionChan   chan chess.Board
 }
 
 func NewDGTPlayer(engine *DGTEngine) *DGT {
@@ -55,9 +56,14 @@ func NewDGTPlayer(engine *DGTEngine) *DGT {
 
 func NewDGTEngine() *DGTEngine {
 	return &DGTEngine{
-		wg:     &sync.WaitGroup{},
-		colors: []chess.Color{},
+		wg:           &sync.WaitGroup{},
+		colors:       []chess.Color{},
+		positionChan: make(chan chess.Board),
 	}
+}
+
+func (p *DGTEngine) PostionChannel() chan chess.Board {
+	return p.positionChan
 }
 
 func (p *DGTEngine) AddColor(color chess.Color) {
@@ -94,7 +100,10 @@ func (p *DGTEngine) Start() {
 	p.io = io
 
 	go p.readLoop()
+}
 
+func (p *DGTEngine) ReadCurrentPosition() {
+	p.io.Write([]byte{DGT_SEND_BRD})
 }
 
 const delayMs = 200
@@ -114,58 +123,39 @@ func (p *DGTEngine) readLoop() {
 				return
 			}
 
-			if p.game != nil && n > 0 && p.game.Outcome() == chess.NoOutcome {
-				msgType := getMessageType(buf[0:n])
+			msgType := getMessageType(buf[0:n])
+			if msgType == DGT_MSG_TYPE_FIELD_UPDATE {
+				p.io.Write([]byte{DGT_SEND_BRD})
+			}
 
-				if msgType == DGT_MSG_TYPE_FIELD_UPDATE {
-					p.io.Write([]byte{DGT_SEND_BRD})
-				} else if msgType == DGT_MSG_TYPE_BOARD_DUMP {
-					pieces := p.getChessBoard(buf[0:n])
-					// moved := false
+			if msgType == DGT_MSG_TYPE_BOARD_DUMP {
+				pieces := p.getChessBoard(buf[0:n])
+				p.positionChan <- getBoard(pieces)
 
+				if p.game != nil && n > 0 && p.game.Outcome() == chess.NoOutcome {
 					moves := p.game.Position().ValidMoves()
 					for _, move := range moves {
 						if p.isValidMoveInPostion(move, *p.game.Clone().Position(), pieces) {
 							p.game.Move(move)
 							p.wg.Done()
-							// moved = true
 							break
 						}
 					}
-
-					// posCnt := len(p.game.Positions())
-					// look in last positions for valid move in order to allow "sliding" pieces on the dgt board
-					// we must not actually move but only undo move so that next "regular move will catch this move"
-					// if !moved && posCnt > 0 {
-					// 	moves := p.game.Positions()[posCnt-1].ValidMoves()
-					// 	for _, move := range moves {
-					// 		if p.isValidMoveInPostion(move, *p.game.Positions()[posCnt-1], pieces) {
-					// 			p.game.UndoMoves(1)
-					// 			p.game.Move(move)
-					// 			p.wg.Done()
-					// 			moved = true
-					// 			break
-					// 		}
-					// 	}
-					// }
-
-					// also look in second last position because AI could already make a move
-					// if !moved && posCnt > 1 {
-					// 	moves := p.game.Positions()[posCnt-2].ValidMoves()
-					// 	for _, move := range moves {
-					// 		if p.isValidMoveInPostion(move, *p.game.Positions()[posCnt-2], pieces) {
-					// 			p.game.UndoMoves(2)
-					// 			p.game.Move(move)
-					// 			p.wg.Done()
-					// 			moved = true
-					// 			break
-					// 		}
-					// 	}
-					// }
 				}
 			}
+
 		})
 	}
+}
+
+func getBoard(pieces []PieceOnSqaure) chess.Board {
+	boardSquares := map[chess.Square]chess.Piece{}
+
+	for _, poc := range pieces {
+		boardSquares[poc.Sqaure] = poc.Piece
+	}
+
+	return *chess.NewBoard(boardSquares)
 }
 
 func (p *DGTEngine) isValidMoveInPostion(move *chess.Move, pos chess.Position, pieces []PieceOnSqaure) bool {

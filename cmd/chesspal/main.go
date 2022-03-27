@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/notnil/chess"
 	"github.com/windler/chesspal/pkg/eval"
 	"github.com/windler/chesspal/pkg/game"
 	"github.com/windler/chesspal/pkg/player"
@@ -43,9 +44,24 @@ type Player struct {
 
 var started = false
 var g *game.Game
+var engine *player.DGTEngine
+var currentBoard chess.Board
 
 func main() {
 	wsUI := ui.NewWS()
+
+	engine = player.NewDGTEngine()
+	engine.Start()
+
+	go func() {
+		for board := range engine.PostionChannel() {
+			if !started {
+				currentBoard = board
+				wsUI.SendBoard(board)
+			}
+		}
+	}()
+	engine.ReadCurrentPosition()
 
 	e := echo.New()
 
@@ -117,14 +133,10 @@ func sendGameStarted(ws *websocket.Conn) {
 }
 
 func startGame(msg *Message, ui game.UI) {
-	var engine *player.DGTEngine
 	evals := []game.EvalEngine{}
 
-	if msg.Options.Black.Type == 0 || msg.Options.White.Type == 0 {
-		engine = player.NewDGTEngine()
-		engine.SetUpsideDown(msg.Options.UpsideDown)
-		engine.Start()
-	}
+	engine.SetUpsideDown(msg.Options.UpsideDown)
+
 	var white, black game.Player
 	if msg.Options.Black.Type == 0 {
 		black = player.NewDGTPlayer(engine)
@@ -143,5 +155,5 @@ func startGame(msg *Message, ui game.UI) {
 		evals = append(evals, eval.NewLastMoveEval("/home/windler/projects/chess/chesspal/bin/stockfish_14"))
 	}
 
-	g.Start(evals...)
+	g.Start(currentBoard.String(), evals...)
 }
