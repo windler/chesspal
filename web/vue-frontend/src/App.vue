@@ -2,83 +2,97 @@
   <v-app>
     <v-main>
       <v-app-bar color="deep-purple accent-4" dense dark>
-        <v-toolbar-title>Chesspal</v-toolbar-title>
-        <v-spacer></v-spacer>
+       Chesspal
+        <v-tabs align-with-title v-model="tab">
+          <v-tab href="#tab-1">
+            <v-icon>fas fa-chess-pawn</v-icon>&nbsp;Game
+          </v-tab>
+          <v-tab href="#tab-2">
+            <v-icon>fas fa-clock-rotate-left</v-icon>&nbsp;History
+          </v-tab>
+          <v-spacer></v-spacer>
 
-        <v-btn v-if="!started" icon @click.stop="startGame()">
-          <v-icon>fas fa-play</v-icon>
-        </v-btn>
-        <v-icon :color="connected ? 'green' : 'red'">fa fa-signal</v-icon>
+          <v-btn v-if="!started" icon @click.stop="startGame()">
+            <v-icon>fas fa-play</v-icon>
+          </v-btn>
+          <v-icon :color="connected ? 'green' : 'red'" class="mx-2">fa fa-signal</v-icon>
+        </v-tabs>
       </v-app-bar>
 
-      <v-container>
-        <v-row class="justify-center">
-          <v-col cols="12" sm="3">
-            <v-sheet rounded="lg" min-height="268">
-              <ChessPlayer
-                v-on:nameChange="white.name = $event"
-                v-on:modeChange="white.mode = $event"
-                v-on:speakChange="white.speak = Boolean($event)"
-                :locked="started"
-                color="white"
-                class="my-6"
-                :bots="bots"
-              />
-              <ChessPlayer
-                v-on:nameChange="black.name = $event"
-                v-on:modeChange="black.mode = $event"
-                v-on:speakChange="black.speak = Boolean($event)"
-                :locked="started"
-                color="black"
-                class="my-6"
-                :bots="bots"
-              />
-              <SettingsCard
-                v-on:upsideDownChange="upsideDown = $event"
-                :locked="started"
-                class="my-6"
-              />
-            </v-sheet>
-          </v-col>
+      <v-tabs-items v-model="tab">
+        <v-tab-item key="1" value="tab-1">
+          <v-container>
+            <v-row class="justify-center">
+              <v-col cols="12" sm="3">
+                <v-sheet rounded="lg" min-height="268">
+                  <ChessPlayer
+                    v-on:nameChange="white.name = $event"
+                    v-on:modeChange="white.mode = $event"
+                    v-on:speakChange="white.speak = Boolean($event)"
+                    :locked="started"
+                    color="white"
+                    class="my-6"
+                    :bots="bots"
+                  />
+                  <ChessPlayer
+                    v-on:nameChange="black.name = $event"
+                    v-on:modeChange="black.mode = $event"
+                    v-on:speakChange="black.speak = Boolean($event)"
+                    :locked="started"
+                    color="black"
+                    class="my-6"
+                    :bots="bots"
+                  />
+                  <SettingsCard
+                    v-on:upsideDownChange="upsideDown = $event"
+                    :locked="started"
+                    class="my-6"
+                  />
+                </v-sheet>
+              </v-col>
 
-          <v-col cols="12" sm="6">
-            <v-sheet min-height="70vh" rounded="lg">
-              <v-row justify="center">
-                <ChessBoard
-                  :svg="
-                    nextBestPosition != '' && showHint
-                      ? nextBestPosition
-                      : currentPosition
-                  "
-                  :fen="fen"
-                  :outcome="outcome"
-                  :pgn="pgn"
-                  class="my-6"
-                />
-              </v-row>
-            </v-sheet>
-          </v-col>
+              <v-col cols="12" sm="6">
+                <v-sheet min-height="70vh" rounded="lg">
+                  <v-row justify="center">
+                    <ChessBoard
+                      :svg="
+                        nextBestPosition != '' && showHint
+                          ? nextBestPosition
+                          : currentPosition
+                      "
+                      :fen="fen"
+                      :outcome="outcome"
+                      :pgn="pgn"
+                      class="my-6"
+                    />
+                  </v-row>
+                </v-sheet>
+              </v-col>
 
-          <v-col cols="12" sm="3">
-            <v-sheet rounded="lg" min-height="268">
-              <EvalInfo :pawn="pawn" :show="evalMode == 1" class="my-6" />
-              <MoveList
-                :movesBlack="movesBlack"
-                :movesWhite="movesWhite"
-                :showEvaluation="evalMode == 1"
-                class="my-6"
-              />
-              <GameActions
-                v-on:undoMoves="undoMoves($event)"
-                v-on:draw="draw()"
-                v-on:resign="resign()"
-                v-on:showHint="showHint = true"
-                v-on:changeMode="evalMode = $event"
-              />
-            </v-sheet>
-          </v-col>
-        </v-row>
-      </v-container>
+              <v-col cols="12" sm="3">
+                <v-sheet rounded="lg" min-height="268">
+                  <EvalInfo :pawn="pawn" :show="evalMode == 1" class="my-6" />
+                  <MoveList
+                    :movesBlack="movesBlack"
+                    :movesWhite="movesWhite"
+                    :showEvaluation="evalMode == 1"
+                    class="my-6"
+                  />
+                  <GameActions
+                    v-on:undoMoves="undoMoves($event)"
+                    v-on:draw="draw()"
+                    v-on:resign="resign()"
+                    v-on:showHint="showHint = true"
+                    v-on:changeMode="evalMode = $event"
+                  />
+                </v-sheet>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-tab-item>
+
+        <v-tab-item key="2" value="tab-2"></v-tab-item>
+      </v-tabs-items>
     </v-main>
   </v-app>
 </template>
@@ -104,6 +118,7 @@ export default {
   },
 
   data: () => ({
+    tab: null,
     showHint: true,
     connection: null,
     upsideDown: false,
@@ -131,7 +146,7 @@ export default {
     pgn: "",
     fen: "r5nr/ppk2pp1/7p/2Bp1b2/8/7P/PPP1PPP1/RN2KB1R",
     outcome: "*",
-    bots: []
+    bots: [],
   }),
   methods: {
     speakMove: function (player, move) {

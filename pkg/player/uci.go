@@ -23,6 +23,11 @@ type UCI struct {
 	engine *uci.Engine
 	depth  int
 	ms     int
+	name   string
+}
+
+func (p *UCI) Name() string {
+	return p.name
 }
 
 func NewUCIPlayer(options BotOptions) *UCI {
@@ -37,6 +42,7 @@ func NewUCIPlayer(options BotOptions) *UCI {
 		engine: eng,
 		depth:  options.Depth,
 		ms:     options.MoveTimeMs,
+		name:   options.Name,
 	}
 }
 

@@ -1,6 +1,7 @@
 address: :8080
 web: ./web/vue-frontend/dist/
 dgtPort: /dev/ttyACM0
+gamesFolder: ./games/
 engines:
   stockfish_14: /home/windler/projects/chess/chesspal/bin/stockfish_14
   komodo_12: /home/windler/projects/chess/chesspal/bin/komodo-12.1.1
@@ -12,13 +13,27 @@ bots:
     threads: 1
     options:
     - Skill=1
-  - name: Adrian 3
-    engine: komodo_12
-    depth: 9
-    moveTimeMs: 300
+  - name: Lichess 1
+    engine: stockfish_14
+    depth: 5
+    moveTimeMs: 50
     threads: 1
     options:
-    - Skill=3
+    - Skill Level=-9
+  - name: Lichess 2
+    engine: stockfish_14
+    depth: 5
+    moveTimeMs: 100
+    threads: 1
+    options:
+    - Skill Level=-5
+  - name: Lichess 3
+    engine: stockfish_14
+    depth: 5
+    moveTimeMs: 150
+    threads: 1
+    options:
+    - Skill Level=-1
 eval:
   engine: stockfish_14
   depth: 20

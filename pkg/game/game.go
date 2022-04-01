@@ -1,6 +1,11 @@
 package game
 
 import (
+	"fmt"
+	"io/ioutil"
+	"sync"
+	"time"
+
 	"github.com/notnil/chess"
 )
 
@@ -33,6 +38,7 @@ const (
 type Player interface {
 	MakeMove(*chess.Game)
 	SetColor(chess.Color)
+	Name() string
 	End()
 }
 
@@ -55,30 +61,49 @@ func NewGame(black, white Player, uis ...UI) *Game {
 
 func (g *Game) Start(fenString string, evalEngines ...EvalEngine) {
 	// TODO check castling availability
-	// fen, err := chess.FEN(fmt.Sprintf("%s w KQkq - 0 1", fenString))
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// g.game = chess.NewGame(fen)
+	fen, err := chess.FEN(fmt.Sprintf("%s w KQkq - 0 1", fenString))
+	if err != nil {
+		panic(err)
+	}
+	g.game = chess.NewGame(fen)
 	g.game = chess.NewGame()
+
+	g.game.AddTagPair("White", g.white.Name())
+	g.game.AddTagPair("Black", g.black.Name())
+	g.game.AddTagPair("Date", time.Now().Format(time.RFC822))
+
 	g.black.SetColor(chess.Black)
 	g.white.SetColor(chess.White)
 
 	g.callUIs(UIAction{})
 
-	for g.game.Outcome() == chess.NoOutcome {
-		if g.game.Position().Turn() == chess.Black {
-			g.black.MakeMove(g.game)
-		} else {
-			g.white.MakeMove(g.game)
-		}
+	wg := &sync.WaitGroup{}
+	go func() {
+		for g.game.Outcome() == chess.NoOutcome {
+			if g.game.Position().Turn() == chess.Black {
+				g.black.MakeMove(g.game)
+			} else {
+				g.white.MakeMove(g.game)
+			}
 
-		move := g.game.Moves()[len(g.game.Moves())-1]
-		g.callEvalEngines(evalEngines)
-		g.callUIs(UIAction{
-			Move: move,
-		})
-	}
+			move := g.game.Moves()[len(g.game.Moves())-1]
+			g.callEvalEngines(evalEngines)
+			g.callUIs(UIAction{
+				Move: move,
+			})
+		}
+	}()
+	go func() {
+		for g.game.Outcome() == chess.NoOutcome {
+			time.Sleep(500 * time.Millisecond)
+		}
+		wg.Done()
+	}()
+	wg.Add(1)
+	wg.Wait()
+
+	g.game.AddTagPair("Result", g.game.Outcome().String())
+	g.callUIs(UIAction{})
 
 	g.black.End()
 	g.white.End()
@@ -127,4 +152,9 @@ func (g *Game) Resign() {
 	g.callUIs(UIAction{
 		Move: move,
 	})
+}
+
+func (g *Game) Save(folder string) {
+	file := fmt.Sprintf("%s%d_%s_vs_%s.pgn", folder, time.Now().UnixMilli(), g.game.GetTagPair("White").Value, g.game.GetTagPair("Black").Value)
+	ioutil.WriteFile(file, []byte(g.game.String()), 0644)
 }

@@ -35,6 +35,7 @@ const DGT_QUEEN = 0x06
 
 type DGT struct {
 	engine *DGTEngine
+	name   string
 }
 
 type DGTEngine struct {
@@ -47,11 +48,16 @@ type DGTEngine struct {
 	positionChan   chan chess.Board
 }
 
-func NewDGTPlayer(engine *DGTEngine) *DGT {
+func NewDGTPlayer(name string, engine *DGTEngine) *DGT {
 	log.Printf("DGT player created ")
 	return &DGT{
 		engine: engine,
+		name:   name,
 	}
+}
+
+func (p *DGT) Name() string {
+	return p.name
 }
 
 func NewDGTEngine() *DGTEngine {

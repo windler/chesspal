@@ -1,7 +1,7 @@
 # TODO
 
-(B) auto reconnect
-(C) show board setup on connect
+(B) auto reconnect {cm:2022-03-27}
+(C) show board setup on connect {cm:2022-03-27}
 (C) show connected devices and status
 (A) undo moves
 (B) show hint {cm:2022-03-26}

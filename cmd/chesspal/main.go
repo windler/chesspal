@@ -47,12 +47,13 @@ type Player struct {
 }
 
 type Config struct {
-	Address string              `yaml:"address"`
-	Web     string              `yaml:"web"`
-	DgtPort string              `yaml:"dgtPort"`
-	Engines map[string]string   `yaml:"engines"`
-	Bots    []player.BotOptions `yaml:"bots"`
-	Eval    Eval                `yaml:"eval"`
+	Address     string              `yaml:"address"`
+	Web         string              `yaml:"web"`
+	GamesFolder string              `yaml:"gamesFolder"`
+	DgtPort     string              `yaml:"dgtPort"`
+	Engines     map[string]string   `yaml:"engines"`
+	Bots        []player.BotOptions `yaml:"bots"`
+	Eval        Eval                `yaml:"eval"`
 }
 
 type Eval struct {
@@ -184,7 +185,7 @@ func startGame(msg *Message, ui game.UI, cfg Config) {
 
 	var white, black game.Player
 	if msg.Options.Black.Type == 0 {
-		black = player.NewDGTPlayer(engine)
+		black = player.NewDGTPlayer(msg.Options.Black.Name, engine)
 	} else {
 		i := msg.Options.Black.Type - 1
 		options := cfg.Bots[i]
@@ -192,7 +193,7 @@ func startGame(msg *Message, ui game.UI, cfg Config) {
 		black = player.NewUCIPlayer(options)
 	}
 	if msg.Options.White.Type == 0 {
-		white = player.NewDGTPlayer(engine)
+		white = player.NewDGTPlayer(msg.Options.White.Name, engine)
 	} else {
 		i := msg.Options.White.Type - 1
 		options := cfg.Bots[i]
@@ -213,4 +214,5 @@ func startGame(msg *Message, ui game.UI, cfg Config) {
 	}
 
 	g.Start(currentBoard.String(), evals...)
+	g.Save(cfg.GamesFolder)
 }

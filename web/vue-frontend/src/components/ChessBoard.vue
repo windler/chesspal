@@ -22,16 +22,25 @@
         <v-icon>{{ showPGN ? "mdi-chevron-up" : "mdi-chevron-down" }}</v-icon>
       </v-btn>
     </v-card-actions>
-
     <v-expand-transition>
-      <div v-show="showPGN">
+      <div v-show="showPGN" style="z-index: 100">
         <v-divider></v-divider>
-        <v-card-text>
-          {{ pgn }}
+        <v-card-text ref="pgn">
+          <pre>{{ pgn }}</pre>
         </v-card-text>
         <v-btn class="ma-2" icon @click="importLichess()"
           ><v-icon>fas fa-magnifying-glass-chart</v-icon>
         </v-btn>
+        <v-btn class="my-2" icon @click="copy()"
+          ><v-icon>fas fa-copy</v-icon>
+        </v-btn>
+        <v-snackbar
+          v-model="copied"
+          timeout="2000"
+          color="deep-purple accent-4"
+        >
+          <span class="text-center">Copied to clipboard!</span>
+        </v-snackbar>
       </div>
     </v-expand-transition>
   </v-card>
@@ -56,10 +65,21 @@ export default {
       const data = await response.json();
       window.open(data.url, "_blank");
     },
+    copy: function () {
+      navigator.clipboard.writeText(this.pgn).then(
+        () => {
+          this.copied = true;
+        },
+        (err) => {
+          console.error("Could not copy text: ", err);
+        }
+      );
+    },
   },
   data() {
     return {
       showPGN: false,
+      copied: false,
     };
   },
 };
