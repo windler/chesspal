@@ -1,14 +1,15 @@
 <template>
-  <v-card variant="outlined" min-width="720px" min-height="700px">
+  <!-- <v-card variant="outlined" min-width="720px" min-height="700px"> -->
+  <v-card variant="outlined" min-width="385px" min-height="350px">
     <v-card-title primary-title class="justify-center">
       <v-icon color="grey">fas fa-chess-board</v-icon>
     </v-card-title>
 
     <div>
-      <div :class="outcome != '*' ? 'dimmed white--text' : ''">
+      <div :class="outcome != '*' ? 'dimmed white--text mx-3' : ''">
         {{ outcome != "*" ? outcome : "" }}
       </div>
-      <div v-html="svg" class="board">{{ svg }}</div>
+      <div v-html="svg" class="board ma-3"></div>
     </div>
 
     <v-divider class="ma-4"></v-divider>
@@ -89,8 +90,8 @@ export default {
 .board {
   transform: scale(2);
   transform-origin: 0 0;
-  width: 700px;
-  height: 700px;
+  width: 720px; 
+  height: 720px;
 }
 
 .dimmed {
@@ -99,7 +100,7 @@ export default {
   height: 720px;
   text-align: center;
   font-size: 70pt;
-  line-height: 700px;
+  line-height: 720px;
   z-index: 10;
   background: rgba(0, 0, 0, 0.7);
 }

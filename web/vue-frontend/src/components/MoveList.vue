@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" min-height="300px" max-height="300px" >
+  <v-card variant="outlined" :min-height="height" :max-height="height" >
     <div id="moveListContainer" class="overflow-y-auto" style="height: 300px">
       <v-card-title primary-title class="justify-center">
         <v-icon color="grey">fa fa-list</v-icon>
@@ -43,7 +43,7 @@
 <script>
 export default {
   name: "MoveList",
-  props: ["movesBlack", "movesWhite", "showEvaluation"],
+  props: ["movesBlack", "movesWhite", "showEvaluation", "height"],
   watch: {
     movesWhite: function () {
       var container = this.$el.querySelector("#moveListContainer");

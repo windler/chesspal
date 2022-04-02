@@ -13,8 +13,7 @@
             v-bind:value="color.toUpperCase()"
             :disabled="locked"
           ></v-text-field>
-        </v-row>
-        <v-row>
+        
           <v-select
             :items="players"
             item-text="name"
@@ -24,13 +23,6 @@
             :disabled="locked"
             return-object
           ></v-select>
-        </v-row>
-        <v-row>
-          <v-switch
-            v-model="speak"
-            label="Speak?"
-            v-on:change="$emit('speakChange', $event)"
-          />
         </v-row>
       </v-container>
     </v-card-actions>
@@ -47,7 +39,6 @@ export default {
   },
   data() {
     return {
-      speak: false,
       defaultVal: {
         name: "Human",
         value: 0,

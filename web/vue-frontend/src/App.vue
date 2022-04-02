@@ -31,35 +31,34 @@
         <v-tab-item key="1" value="tab-1">
           <v-container>
             <v-row class="justify-center">
-              <v-col cols="12" sm="3">
+              <v-col cols="3">
                 <v-sheet rounded="lg" min-height="268">
                   <ChessPlayer
                     v-on:nameChange="white.name = $event"
                     v-on:modeChange="white.mode = $event"
-                    v-on:speakChange="white.speak = Boolean($event)"
                     :locked="started"
                     color="white"
-                    class="my-6"
                     :bots="bots"
                   />
                   <ChessPlayer
                     v-on:nameChange="black.name = $event"
                     v-on:modeChange="black.mode = $event"
-                    v-on:speakChange="black.speak = Boolean($event)"
                     :locked="started"
                     color="black"
-                    class="my-6"
+                    class="my-4"
                     :bots="bots"
                   />
                   <SettingsCard
+                    :locked="started"                    
                     v-on:upsideDownChange="upsideDown = $event"
-                    :locked="started"
-                    class="my-6"
+                    v-on:speakChange="white.speak = Boolean($event); black.speak = Boolean($event)"
+                    v-on:changeMode="evalMode = $event"
+                    class="my-4"
                   />
                 </v-sheet>
               </v-col>
 
-              <v-col cols="12" sm="6">
+              <v-col cols="6">
                 <v-sheet min-height="70vh" rounded="lg">
                   <v-row class="justify-center">
                     <ChessBoard
@@ -71,27 +70,27 @@
                       :fen="fen"
                       :outcome="outcome"
                       :pgn="pgn"
-                      class="my-6"
+                      class="my-4"
                     />
                   </v-row>
                 </v-sheet>
               </v-col>
 
-              <v-col cols="12" sm="3">
+              <v-col cols="3">
                 <v-sheet rounded="lg" min-height="268">
-                  <EvalInfo :pawn="pawn" :show="evalMode == 1" class="my-6" />
+                  <EvalInfo :pawn="pawn" :show="evalMode == 1" />
                   <MoveList
                     :movesBlack="movesBlack"
                     :movesWhite="movesWhite"
                     :showEvaluation="evalMode == 1"
-                    class="my-6"
+                    class="my-4"
+                    height="350px"
                   />
                   <GameActions
                     v-on:undoMoves="undoMoves($event)"
                     v-on:draw="draw()"
                     v-on:resign="resign()"
                     v-on:showHint="showHint = true"
-                    v-on:changeMode="evalMode = $event"
                   />
                 </v-sheet>
               </v-col>
@@ -202,12 +201,15 @@ export default {
         text = text.replace(/\+/g, " Check ");
         text = text.replace(/#/g, " Check mate ");
 
-        this.speech.text = text;
-
-        this.speech.rate = 0.4;
-        window.speechSynthesis.speak(this.speech);
+        this.speak(text);
         this.lastSpoken = move + player.name;
       }
+    },
+    speak: function (text) {
+      this.speech.text = text;
+
+      this.speech.rate = 0.4;
+      window.speechSynthesis.speak(this.speech);
     },
     startGame: function () {
       if (!this.started) {
@@ -229,6 +231,7 @@ export default {
 
         this.connection.send(msg);
         console.log(msg);
+        this.speak("Game started! " + this.white.name + " versus " + this.black.name)
       }
     },
     undoMoves: function (n) {

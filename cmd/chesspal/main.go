@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -119,7 +120,15 @@ func main() {
 	wsUI := ui.NewWS()
 
 	engine = player.NewDGTEngine()
-	engine.Start(config.DgtPort)
+	for true {
+		err := engine.Start(config.DgtPort)
+
+		if err == nil {
+			break
+		}
+		log.Println(err.Error())
+		time.Sleep(1 * time.Second)
+	}
 
 	go func() {
 		for board := range engine.PostionChannel() {

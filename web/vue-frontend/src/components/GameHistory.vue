@@ -1,7 +1,7 @@
 <template>
   <v-container fill-height>
     <v-row justify="center">
-      <v-col cols="12" sm="6">
+      <v-col cols="12" sm="12">
         <v-card>
           <v-data-table
             :headers="headers"
@@ -37,13 +37,16 @@
               </v-icon>
             </template>
             <template v-slot:expanded-item="{ headers, item }">
-              <v-container>
+              <!-- <v-container>
                 <v-row justify="center">
-                  <v-col cols="12" sm="1">
-                    <td :colspan="headers.length" v-html="item.svg"></td>
-                  </v-col>
+                  <v-col cols="12" sm="1"> -->
+              <td :colspan="headers.length">
+                <div class="ma-6 text-center" v-html="item.svg" />
+              </td>
+              <!-- <td :colspan="headers.length" ></td> -->
+              <!-- </v-col>
                 </v-row>
-              </v-container>
+              </v-container> -->
             </template>
           </v-data-table>
         </v-card>

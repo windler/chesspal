@@ -89,7 +89,7 @@ func (p *DGTEngine) MakeMove(game *chess.Game) {
 	p.wg.Wait()
 }
 
-func (p *DGTEngine) Start(port string) {
+func (p *DGTEngine) Start(port string) error {
 	options := serial.OpenOptions{
 		PortName:        port,
 		BaudRate:        9600,
@@ -100,7 +100,7 @@ func (p *DGTEngine) Start(port string) {
 
 	io, err := serial.Open(options)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	io.Write([]byte{DGT_SEND_RESET})
@@ -110,6 +110,7 @@ func (p *DGTEngine) Start(port string) {
 	p.io = io
 
 	go p.readLoop()
+	return nil
 }
 
 func (p *DGTEngine) ReadCurrentPosition() {
