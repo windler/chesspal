@@ -26,6 +26,10 @@ type UCI struct {
 	name   string
 }
 
+func (p *UCI) IsBot() bool {
+	return true
+}
+
 func (p *UCI) Name() string {
 	return p.name
 }

@@ -2,7 +2,7 @@
   <v-app>
     <v-main>
       <v-app-bar color="deep-purple accent-4" dense dark>
-       Chesspal
+        Chesspal
         <v-tabs align-with-title v-model="tab">
           <v-tab href="#tab-1">
             <v-icon>fas fa-chess-pawn</v-icon>&nbsp;Game
@@ -10,12 +10,20 @@
           <v-tab href="#tab-2">
             <v-icon>fas fa-clock-rotate-left</v-icon>&nbsp;History
           </v-tab>
+          <v-tab href="#tab-3">
+            <v-icon>fas fa-box-open</v-icon>&nbsp;Archive
+          </v-tab>
+          <v-tab href="#tab-4">
+            <v-icon>fas fa-robot</v-icon>&nbsp;Bot games
+          </v-tab>
           <v-spacer></v-spacer>
 
           <v-btn v-if="!started" icon @click.stop="startGame()">
             <v-icon>fas fa-play</v-icon>
           </v-btn>
-          <v-icon :color="connected ? 'green' : 'red'" class="mx-2">fa fa-signal</v-icon>
+          <v-icon :color="connected ? 'green' : 'red'" class="mx-2"
+            >fa fa-signal</v-icon
+          >
         </v-tabs>
       </v-app-bar>
 
@@ -53,7 +61,7 @@
 
               <v-col cols="12" sm="6">
                 <v-sheet min-height="70vh" rounded="lg">
-                  <v-row justify="center">
+                  <v-row class="justify-center">
                     <ChessBoard
                       :svg="
                         nextBestPosition != '' && showHint
@@ -91,7 +99,27 @@
           </v-container>
         </v-tab-item>
 
-        <v-tab-item key="2" value="tab-2"></v-tab-item>
+        <v-tab-item key="2" value="tab-2">
+          <GameHistory
+            showArchived="false"
+            showBotGames="false"
+            showHumanGames="true"
+          />
+        </v-tab-item>
+        <v-tab-item key="3" value="tab-3">
+          <GameHistory
+            showArchived="true"
+            showBotGames="true"
+            showHumanGames="true"
+          />
+        </v-tab-item>
+        <v-tab-item key="4" value="tab-4">
+          <GameHistory
+            showArchived="false"
+            showBotGames="true"
+            showHumanGames="false"
+          />
+        </v-tab-item>
       </v-tabs-items>
     </v-main>
   </v-app>
@@ -104,6 +132,7 @@ import MoveList from "./components/MoveList.vue";
 import ChessBoard from "./components/ChessBoard.vue";
 import SettingsCard from "./components/SettingsCard.vue";
 import GameActions from "./components/GameActions.vue";
+import GameHistory from "./components/GameHistory.vue";
 
 export default {
   name: "App",
@@ -115,6 +144,7 @@ export default {
     ChessBoard,
     SettingsCard,
     GameActions,
+    GameHistory,
   },
 
   data: () => ({
@@ -148,6 +178,7 @@ export default {
     outcome: "*",
     bots: [],
   }),
+
   methods: {
     speakMove: function (player, move) {
       if (

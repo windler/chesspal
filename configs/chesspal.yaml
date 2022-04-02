@@ -2,6 +2,7 @@ address: :8080
 web: ./web/vue-frontend/dist/
 dgtPort: /dev/ttyACM0
 gamesFolder: ./games/
+archiveFolder: ./games/archive/
 engines:
   stockfish_14: /home/windler/projects/chess/chesspal/bin/stockfish_14
   komodo_12: /home/windler/projects/chess/chesspal/bin/komodo-12.1.1

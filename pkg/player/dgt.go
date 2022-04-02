@@ -56,6 +56,10 @@ func NewDGTPlayer(name string, engine *DGTEngine) *DGT {
 	}
 }
 
+func (p *DGT) IsBot() bool {
+	return false
+}
+
 func (p *DGT) Name() string {
 	return p.name
 }

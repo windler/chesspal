@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"bytes"
 	"errors"
 	"image/color"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/image"
 	"github.com/windler/chesspal/pkg/game"
+	"github.com/windler/chesspal/pkg/util"
 )
 
 type WSUI struct {
@@ -24,7 +24,7 @@ func NewWS() *WSUI {
 	return &WSUI{
 		mutex: &sync.Mutex{},
 		currentState: &GameState{
-			SVGPosition: getSVG(*game.Position().Board()),
+			SVGPosition: util.GetSVG(*game.Position().Board()),
 		},
 	}
 }
@@ -59,12 +59,12 @@ var moveEncoder = chess.AlgebraicNotation{}
 func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	u.mutex.Lock()
 	if len(g.Moves()) == 0 {
-		u.currentState.SVGPosition = getSVG(*g.Position().Board())
+		u.currentState.SVGPosition = util.GetSVG(*g.Position().Board())
 	} else {
 		move := g.Moves()[len(g.Moves())-1]
 		mark := image.MarkSquares(yellow, move.S1(), move.S2())
 
-		u.currentState.SVGPosition = getSVG(*g.Position().Board(), mark)
+		u.currentState.SVGPosition = util.GetSVG(*g.Position().Board(), mark)
 
 		u.currentState.Turn = g.Position().Turn().String()
 		u.currentState.PGN = g.String()
@@ -106,7 +106,7 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 			markLast := image.MarkSquares(yellow, move.S1(), move.S2())
 			markBest := image.MarkSquares(green, nextBestMove.S1(), nextBestMove.S2())
 
-			u.currentState.SVGNextBestMove = getSVG(*g.Position().Board(), markLast, markBest)
+			u.currentState.SVGNextBestMove = util.GetSVG(*g.Position().Board(), markLast, markBest)
 		}
 	}
 
@@ -129,23 +129,6 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 	u.mutex.Unlock()
 }
 
-func getSVG(board chess.Board, opts ...func(*image.Encoder)) string {
-	colors := image.SquareColors(color.RGBA{R: 0xC7, G: 0xC6, B: 0xC1}, color.RGBA{R: 0x82, G: 0x82, B: 0x82})
-	o := []func(*image.Encoder){colors}
-
-	for _, opt := range opts {
-		o = append(o, opt)
-	}
-
-	buf := bytes.NewBufferString("")
-
-	if err := image.SVG(buf, &board, o...); err != nil {
-		log.Printf("error occurred: %v", err)
-	}
-
-	return buf.String()
-}
-
 func (u *WSUI) sendCurentState(ws *websocket.Conn) {
 	if err := ws.WriteJSON(u.currentState); !errors.Is(err, nil) {
 		log.Printf("error occurred: %v", err)
@@ -154,7 +137,7 @@ func (u *WSUI) sendCurentState(ws *websocket.Conn) {
 
 func (u *WSUI) SendBoard(board chess.Board) {
 	u.currentState = &GameState{
-		SVGPosition: getSVG(board),
+		SVGPosition: util.GetSVG(board),
 	}
 	for _, ws := range u.sockets {
 		u.sendCurentState(ws)

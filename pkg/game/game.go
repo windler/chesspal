@@ -39,6 +39,7 @@ type Player interface {
 	MakeMove(*chess.Game)
 	SetColor(chess.Color)
 	Name() string
+	IsBot() bool
 	End()
 }
 
@@ -66,11 +67,14 @@ func (g *Game) Start(fenString string, evalEngines ...EvalEngine) {
 		panic(err)
 	}
 	g.game = chess.NewGame(fen)
-	g.game = chess.NewGame()
 
 	g.game.AddTagPair("White", g.white.Name())
 	g.game.AddTagPair("Black", g.black.Name())
 	g.game.AddTagPair("Date", time.Now().Format(time.RFC822))
+
+	if g.white.IsBot() || g.black.IsBot() {
+		g.game.AddTagPair("Botgame", "true")
+	}
 
 	g.black.SetColor(chess.Black)
 	g.white.SetColor(chess.White)
