@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined">
+  <v-card shaped>
     <v-card-title primary-title class="justify-center">
       <v-icon>{{ icon }}</v-icon>
     </v-card-title>
@@ -10,7 +10,7 @@
           <v-text-field
             v-on:input="$emit('nameChange', $event)"
             label="Name"
-            v-bind:value="color.toUpperCase()"
+            :value="name"
             :disabled="locked"
           ></v-text-field>
         
@@ -62,6 +62,6 @@ export default {
     },
   },
 
-  props: ["color", "locked", "bots"],
+  props: ["color", "locked", "bots", "name"],
 };
 </script>

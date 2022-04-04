@@ -93,6 +93,7 @@ type Game struct {
 	White    string `json:"white"`
 	Black    string `json:"black"`
 	Date     string `json:"date"`
+	DateTime int64  `json:"dateTime"`
 	Result   string `json:"result"`
 	Archived bool   `json:"archived"`
 	Botgame  bool   `json:"botgame"`
@@ -299,6 +300,13 @@ func getGame(f fs.FileInfo, config Config, archive bool) *Game {
 		}
 	}
 
+	date := g.GetTagPair("Date").Value
+
+	dateTime := int64(0)
+	time, err := time.Parse("02/01/2006 15:04:05", date)
+	if err == nil {
+		dateTime = time.UnixMilli()
+	}
 	return &Game{
 		ID:       f.Name(),
 		PGN:      g.String(),
@@ -306,7 +314,8 @@ func getGame(f fs.FileInfo, config Config, archive bool) *Game {
 		White:    g.GetTagPair("White").Value,
 		Black:    g.GetTagPair("Black").Value,
 		Result:   string(g.Outcome()),
-		Date:     g.GetTagPair("Date").Value,
+		Date:     date,
+		DateTime: dateTime,
 		Archived: archive,
 		Botgame:  botGame,
 	}

@@ -70,7 +70,8 @@ func (g *Game) Start(fenString string, evalEngines ...EvalEngine) {
 
 	g.game.AddTagPair("White", g.white.Name())
 	g.game.AddTagPair("Black", g.black.Name())
-	g.game.AddTagPair("Date", time.Now().Format(time.RFC822))
+	g.game.AddTagPair("Date", time.Now().Format("02/01/2006 15:04:05"))
+	g.game.AddTagPair("FEN", g.game.FEN())
 
 	if g.white.IsBot() || g.black.IsBot() {
 		g.game.AddTagPair("Botgame", "true")

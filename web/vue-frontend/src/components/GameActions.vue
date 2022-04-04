@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" class="overflow-y-auto">
+  <v-card shaped>
     <v-card-title primary-title class="justify-center">
       <v-icon color="grey">fas fa-forward</v-icon>
     </v-card-title>

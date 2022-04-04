@@ -1,15 +1,15 @@
 <template>
   <!-- <v-card variant="outlined" min-width="720px" min-height="700px"> -->
-  <v-card variant="outlined" min-width="385px" min-height="350px">
+  <v-card darkrounded min-width="385px" min-height="350px">
     <v-card-title primary-title class="justify-center">
       <v-icon color="grey">fas fa-chess-board</v-icon>
     </v-card-title>
 
     <div>
-      <div :class="outcome != '*' ? 'dimmed white--text mx-3' : ''">
+      <div :class="outcome != '*' ? 'dimmed white--text ma-auto' : ''">
         {{ outcome != "*" ? outcome : "" }}
       </div>
-      <div v-html="svg" class="board ma-3"></div>
+      <div v-html="svg" class="board ma-auto"></div>
     </div>
 
     <v-divider class="ma-4"></v-divider>
@@ -96,7 +96,7 @@ export default {
 
 .dimmed {
   position: absolute;
-  width: 720px;
+  width: 100%;
   height: 720px;
   text-align: center;
   font-size: 70pt;

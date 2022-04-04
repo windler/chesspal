@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main>
-      <v-app-bar color="deep-purple accent-4" dense dark>
+      <v-app-bar color="accent-4" dense dark>
         Chesspal
         <v-tabs align-with-title v-model="tab">
           <v-tab href="#tab-1">
@@ -18,6 +18,9 @@
           </v-tab>
           <v-spacer></v-spacer>
 
+          <v-btn icon @click.stop="toggleDarkTheme()">
+            <v-icon>fa fa-moon</v-icon>
+          </v-btn>
           <v-btn v-if="!started" icon @click.stop="startGame()">
             <v-icon>fas fa-play</v-icon>
           </v-btn>
@@ -32,67 +35,69 @@
           <v-container>
             <v-row class="justify-center">
               <v-col cols="3">
-                <v-sheet rounded="lg" min-height="268">
-                  <ChessPlayer
-                    v-on:nameChange="white.name = $event"
-                    v-on:modeChange="white.mode = $event"
-                    :locked="started"
-                    color="white"
-                    :bots="bots"
-                  />
-                  <ChessPlayer
-                    v-on:nameChange="black.name = $event"
-                    v-on:modeChange="black.mode = $event"
-                    :locked="started"
-                    color="black"
-                    class="my-4"
-                    :bots="bots"
-                  />
-                  <SettingsCard
-                    :locked="started"                    
-                    v-on:upsideDownChange="upsideDown = $event"
-                    v-on:speakChange="white.speak = Boolean($event); black.speak = Boolean($event)"
-                    v-on:changeMode="evalMode = $event"
-                    class="my-4"
-                  />
-                </v-sheet>
+                <ChessPlayer
+                  v-on:nameChange="white.name = $event"
+                  v-on:modeChange="white.mode = $event"
+                  :locked="started"
+                  color="white"
+                  :name="white.name"
+                  :bots="bots"
+                  class="my-4"
+                />
+                <ChessPlayer
+                  v-on:nameChange="black.name = $event"
+                  v-on:modeChange="black.mode = $event"
+                  :locked="started"
+                  color="black"
+                  :name="black.name"
+                  class="my-4"
+                  :bots="bots"
+                />
+                <SettingsCard
+                  :locked="started"
+                  v-on:upsideDownChange="upsideDown = $event"
+                  v-on:speakChange="
+                    white.speak = Boolean($event);
+                    black.speak = Boolean($event);
+                  "
+                  :speak="white.speak || black.speak ? 'true' : 'false'"
+                  v-on:changeMode="evalMode = $event"
+                  class="my-4"
+                />
               </v-col>
 
               <v-col cols="6">
-                <v-sheet min-height="70vh" rounded="lg">
-                  <v-row class="justify-center">
-                    <ChessBoard
-                      :svg="
-                        nextBestPosition != '' && showHint
-                          ? nextBestPosition
-                          : currentPosition
-                      "
-                      :fen="fen"
-                      :outcome="outcome"
-                      :pgn="pgn"
-                      class="my-4"
-                    />
-                  </v-row>
-                </v-sheet>
+                <ChessBoard
+                  :svg="
+                    nextBestPosition != '' && showHint
+                      ? nextBestPosition
+                      : currentPosition
+                  "
+                  :fen="fen"
+                  :outcome="outcome"
+                  :pgn="pgn"
+                  class="my-4"
+                />
               </v-col>
 
               <v-col cols="3">
-                <v-sheet rounded="lg" min-height="268">
-                  <EvalInfo :pawn="pawn" :show="evalMode == 1" />
-                  <MoveList
-                    :movesBlack="movesBlack"
-                    :movesWhite="movesWhite"
-                    :showEvaluation="evalMode == 1"
-                    class="my-4"
-                    height="350px"
-                  />
-                  <GameActions
-                    v-on:undoMoves="undoMoves($event)"
-                    v-on:draw="draw()"
-                    v-on:resign="resign()"
-                    v-on:showHint="showHint = true"
-                  />
-                </v-sheet>
+                <EvalInfo
+                  :pawn="pawn"
+                  :class="evalMode == 1 ? 'my-4' : 'd-none'"
+                />
+                <MoveList
+                  :movesBlack="movesBlack"
+                  :movesWhite="movesWhite"
+                  :showEvaluation="evalMode == 1"
+                  class="my-4"
+                  height="350px"
+                />
+                <GameActions
+                  v-on:undoMoves="undoMoves($event)"
+                  v-on:draw="draw()"
+                  v-on:resign="resign()"
+                  v-on:showHint="showHint = true"
+                />
               </v-col>
             </v-row>
           </v-container>
@@ -162,14 +167,14 @@ export default {
     pawn: 50.0,
     turn: "w",
     black: {
-      name: "Black",
+      name: "black",
       mode: 0,
-      speak: false,
+      speak: true,
     },
     white: {
-      name: "White",
+      name: "white",
       mode: 0,
-      speak: false,
+      speak: true,
     },
     evalMode: 0,
     pgn: "",
@@ -179,6 +184,9 @@ export default {
   }),
 
   methods: {
+    toggleDarkTheme() {
+      this.$vuetify.theme.dark = !this.$vuetify.theme.dark;
+    },
     speakMove: function (player, move) {
       if (
         player.speak &&
@@ -231,7 +239,9 @@ export default {
 
         this.connection.send(msg);
         console.log(msg);
-        this.speak("Game started! " + this.white.name + " versus " + this.black.name)
+        this.speak(
+          "Game started! " + this.white.name + " versus " + this.black.name
+        );
       }
     },
     undoMoves: function (n) {
@@ -260,6 +270,24 @@ export default {
 
       this.connection.send(msg);
       console.log(msg);
+    },
+  },
+
+  mounted() {
+    if (localStorage.white) {
+      this.white.name = localStorage.white;
+    }
+    if (localStorage.black) {
+      this.black.name = localStorage.black;
+    }
+  },
+
+  watch: {
+    "white.name": function (val) {
+      localStorage.white = val;
+    },
+    "black.name": function (val) {
+      localStorage.black = val;
     },
   },
 

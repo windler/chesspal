@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined">
+  <v-card shaped>
     <v-card-title primary-title class="justify-center">
       <v-icon color="grey">fat fa-gear</v-icon>
     </v-card-title>
@@ -9,7 +9,7 @@
         <v-row>
           <v-col col="6">
             <v-switch
-              v-model="speak"
+              :value="speak"
               label="Speak"
               v-on:change="$emit('speakChange', $event)"
             />
@@ -42,7 +42,7 @@
 <script>
 export default {
   name: "SettingsCard",
-  props: ["locked"],
+  props: ["locked", "speak"],
 
   data() {
     return {

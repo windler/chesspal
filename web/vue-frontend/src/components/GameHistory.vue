@@ -11,6 +11,8 @@
             :search="search"
             :single-expand="singleExpand"
             show-expand
+            :sort-by.sync="sortBy"
+            :sort-desc.sync="sortDesc"
           >
             <template v-slot:top>
               <v-toolbar flat>
@@ -23,6 +25,9 @@
                   single-line
                   hide-details
                 ></v-text-field>
+                <v-btn icon @click="getGames()"
+                  ><v-icon>fas fa-refresh</v-icon></v-btn
+                >
               </v-toolbar>
             </template>
             <template v-slot:[`item.actions`]="{ item }">
@@ -64,12 +69,19 @@ export default {
       history: [],
       search: "",
       singleExpand: true,
+      sortBy: "dateTime",
+      sortDesc: true,
     };
   },
 
   computed: {
     headers() {
       return [
+        {
+          text: "DateTime",
+          value: "dateTime",
+          align: " d-none",
+        },
         {
           text: "Date",
           align: "start",
