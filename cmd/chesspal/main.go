@@ -121,25 +121,27 @@ func main() {
 	wsUI := ui.NewWS()
 
 	engine = player.NewDGTEngine()
-	for true {
-		err := engine.Start(config.DgtPort)
-
-		if err == nil {
-			break
-		}
-		log.Println(err.Error())
-		time.Sleep(1 * time.Second)
-	}
-
 	go func() {
-		for board := range engine.PostionChannel() {
-			if !started {
-				currentBoard = board
-				wsUI.SendBoard(board)
+		for true {
+			err := engine.Start(config.DgtPort)
+
+			if err == nil {
+				break
 			}
+			log.Println(err.Error())
+			time.Sleep(1 * time.Second)
 		}
+
+		go func() {
+			for board := range engine.PostionChannel() {
+				if !started {
+					currentBoard = board
+					wsUI.SendBoard(board)
+				}
+			}
+		}()
+		engine.ReadCurrentPosition()
 	}()
-	engine.ReadCurrentPosition()
 
 	e := echo.New()
 

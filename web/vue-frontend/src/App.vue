@@ -1,8 +1,11 @@
 <template>
   <v-app>
     <v-main>
-      <v-app-bar color="accent-4" dense dark>
-        Chesspal
+      <v-overlay opacity="0.9" :value="overlay">
+        <v-img class="logo" src="/chesspal.svg"></v-img>
+      </v-overlay>
+      <v-app-bar dark dense>
+        <v-img width="60px" class="logo" src="/chesspal.svg"></v-img>
         <v-tabs align-with-title v-model="tab">
           <v-tab href="#tab-1">
             <v-icon>fas fa-chess-pawn</v-icon>&nbsp;Game
@@ -21,9 +24,6 @@
           <v-btn icon @click.stop="toggleDarkTheme()">
             <v-icon>fa fa-moon</v-icon>
           </v-btn>
-          <v-btn v-if="!started" icon @click.stop="startGame()">
-            <v-icon>fas fa-play</v-icon>
-          </v-btn>
           <v-icon :color="connected ? 'green' : 'red'" class="mx-2"
             >fa fa-signal</v-icon
           >
@@ -34,39 +34,7 @@
         <v-tab-item key="1" value="tab-1">
           <v-container>
             <v-row class="justify-center">
-              <v-col cols="3">
-                <ChessPlayer
-                  v-on:nameChange="white.name = $event"
-                  v-on:modeChange="white.mode = $event"
-                  :locked="started"
-                  color="white"
-                  :name="white.name"
-                  :bots="bots"
-                  class="my-4"
-                />
-                <ChessPlayer
-                  v-on:nameChange="black.name = $event"
-                  v-on:modeChange="black.mode = $event"
-                  :locked="started"
-                  color="black"
-                  :name="black.name"
-                  class="my-4"
-                  :bots="bots"
-                />
-                <SettingsCard
-                  :locked="started"
-                  v-on:upsideDownChange="upsideDown = $event"
-                  v-on:speakChange="
-                    white.speak = Boolean($event);
-                    black.speak = Boolean($event);
-                  "
-                  :speak="white.speak || black.speak ? 'true' : 'false'"
-                  v-on:changeMode="evalMode = $event"
-                  class="my-4"
-                />
-              </v-col>
-
-              <v-col cols="6">
+              <v-col cols="12" lg="8">
                 <ChessBoard
                   :svg="
                     nextBestPosition != '' && showHint
@@ -80,7 +48,7 @@
                 />
               </v-col>
 
-              <v-col cols="3">
+              <v-col cols="12" lg="3">
                 <EvalInfo
                   :pawn="pawn"
                   :class="evalMode == 1 ? 'my-4' : 'd-none'"
@@ -96,8 +64,68 @@
                   v-on:undoMoves="undoMoves($event)"
                   v-on:draw="draw()"
                   v-on:resign="resign()"
+                  class="my-4"
                   v-on:showHint="showHint = true"
                 />
+                <v-dialog
+                  overlay-opacity="0.95"
+                  v-model="dialog"
+                  max-width="350px"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      :disabled="!connected"
+                      color="primary"
+                      width="100%"
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      New game
+                    </v-btn>
+                  </template>
+                  <v-container>
+                    <v-row class="justify-center">
+                      <v-col cols="12">
+                        <ChessPlayer
+                          v-on:nameChange="white.name = $event"
+                          v-on:modeChange="white.mode = $event"
+                          :locked="started"
+                          color="white"
+                          :name="white.name"
+                          :bots="bots"
+                          class="my-4"
+                        />
+                        <ChessPlayer
+                          v-on:nameChange="black.name = $event"
+                          v-on:modeChange="black.mode = $event"
+                          :locked="started"
+                          color="black"
+                          :name="black.name"
+                          class="my-4"
+                          :bots="bots"
+                        />
+                        <SettingsCard
+                          :locked="started"
+                          v-on:upsideDownChange="upsideDown = $event"
+                          v-on:speakChange="
+                            white.speak = Boolean($event);
+                            black.speak = Boolean($event);
+                          "
+                          :speak="white.speak || black.speak ? 'true' : 'false'"
+                          v-on:changeMode="evalMode = $event"
+                          class="my-4"
+                        />
+                        <v-btn
+                          color="primary"
+                          width="100%"
+                          @click.stop="startGame(); dialog=false"
+                        >
+                          Start game
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-dialog>
               </v-col>
             </v-row>
           </v-container>
@@ -152,6 +180,7 @@ export default {
   },
 
   data: () => ({
+    overlay: true,
     tab: null,
     showHint: true,
     connection: null,
@@ -169,12 +198,12 @@ export default {
     black: {
       name: "black",
       mode: 0,
-      speak: true,
+      speak: false,
     },
     white: {
       name: "white",
       mode: 0,
-      speak: true,
+      speak: false,
     },
     evalMode: 0,
     pgn: "",
@@ -292,6 +321,10 @@ export default {
   },
 
   created: async function () {
+    setTimeout(() => {
+      this.overlay = false;
+    }, 2000);
+
     const connect = () => {
       this.speech = new SpeechSynthesisUtterance();
       this.voices = window.speechSynthesis.getVoices();
@@ -389,3 +422,8 @@ export default {
   },
 };
 </script>
+<style >
+.logo {
+  filter: invert(100%);
+}
+</style>

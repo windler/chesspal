@@ -62,11 +62,11 @@ func NewGame(black, white Player, uis ...UI) *Game {
 
 func (g *Game) Start(fenString string, evalEngines ...EvalEngine) {
 	// TODO check castling availability
-	fen, err := chess.FEN(fmt.Sprintf("%s w KQkq - 0 1", fenString))
-	if err != nil {
-		panic(err)
-	}
-	g.game = chess.NewGame(fen)
+	// fen, err := chess.FEN(fmt.Sprintf("%s w KQkq - 0 1", fenString))
+	// if err != nil {
+	// 	panic(err)
+	// }
+	g.game = chess.NewGame()
 
 	g.game.AddTagPair("White", g.white.Name())
 	g.game.AddTagPair("Black", g.black.Name())

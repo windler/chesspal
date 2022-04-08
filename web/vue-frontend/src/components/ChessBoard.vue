@@ -1,15 +1,16 @@
 <template>
   <!-- <v-card variant="outlined" min-width="720px" min-height="700px"> -->
-  <v-card darkrounded min-width="385px" min-height="350px">
+  <v-card darkrounded min-width="280px" min-height="280px">
     <v-card-title primary-title class="justify-center">
       <v-icon color="grey">fas fa-chess-board</v-icon>
     </v-card-title>
 
     <div>
-      <div :class="outcome != '*' ? 'dimmed white--text ma-auto' : ''">
+      <v-overlay :absolute="absolute" :value="outcome != '*'" class="dimmed white--text">
         {{ outcome != "*" ? outcome : "" }}
-      </div>
-      <div v-html="svg" class="board ma-auto"></div>
+      </v-overlay>
+      
+      <div v-html="svg" :class="boardClass() + ' ma-auto'"></div>
     </div>
 
     <v-divider class="ma-4"></v-divider>
@@ -53,6 +54,17 @@ export default {
 
   props: ["svg", "fen", "outcome", "pgn"],
   methods: {
+    boardClass: function() {
+      switch (this.$vuetify.breakpoint.name) {
+        case "xs": return 'board-xsmall'
+        case "sm": return 'board-small'
+        case "md": return 'board-small'
+        case "lg": return 'board-medium'
+        case "xl": return 'board'
+      }
+       return 'board'
+      
+    },
     importLichess: async function () {
       const requestOptions = {
         method: "POST",
@@ -81,27 +93,45 @@ export default {
     return {
       showPGN: false,
       copied: false,
+      absolute: true,
     };
   },
 };
 </script>
 
 <style>
+
 .board {
-  transform: scale(2);
-  transform-origin: 0 0;
-  width: 720px; 
-  height: 720px;
+    transform: scale(2);
+    transform-origin: 0 0;
+    width: 720px; 
+    height: 720px;
+}
+
+.board-xsmall {
+  transform: scale(0.8);
+    transform-origin: 0 0;
+    width: 280px; 
+    height: 280px;
+}
+
+.board-small {
+    transform: scale(1);
+    transform-origin: 0 0;
+    width: 350px; 
+    height: 350px;
+}
+
+.board-medium {
+    transform: scale(1.5);
+    transform-origin: 0 0;
+    width: 525px; 
+    height: 525px;
 }
 
 .dimmed {
-  position: absolute;
-  width: 100%;
-  height: 720px;
   text-align: center;
   font-size: 70pt;
-  line-height: 720px;
-  z-index: 10;
-  background: rgba(0, 0, 0, 0.7);
+  line-height: 100%;
 }
 </style>

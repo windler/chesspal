@@ -5,18 +5,18 @@
     </v-card-title>
     <v-container>
       <v-row class="justify-center">
-        <v-btn class="ma-2" @click="$emit('showHint', true)" outlined
+        <v-btn class="ma-4" @click="$emit('showHint', true)" outlined
           ><v-icon left>fas fa-circle-question</v-icon> Hint
         </v-btn>
       </v-row>
       <v-row class="justify-center">
-        <v-btn class="ma-2" @click="$emit('undoMoves', 2)" outlined
+        <v-btn class="ma-4" @click="$emit('undoMoves', 2)" outlined
           ><v-icon left> fas fa-rotate-left </v-icon> Undo
         </v-btn>
-        <v-btn class="ma-2" @click="$emit('resign', 2)" outlined
+        <v-btn class="ma-4" @click="$emit('resign', 2)" outlined
           ><v-icon left> fas fa-flag-checkered </v-icon> Resign
         </v-btn>
-        <v-btn class="ma-2" @click="$emit('draw', 2)" outlined
+        <v-btn class="ma-4" @click="$emit('draw', 2)" outlined
           >1/2 - 1/2
         </v-btn>
       </v-row>
