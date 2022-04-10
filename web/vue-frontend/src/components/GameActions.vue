@@ -20,6 +20,19 @@
           >1/2 - 1/2
         </v-btn>
       </v-row>
+      <v-row class="justify-center">
+        <v-select
+          class="ma-4"
+          label="Evaluation mode"
+          persistent-hint
+          :items="modes"
+          item-text="name"
+          item-value="value"
+          v-model="defaultVal"
+          v-on:input="$emit('changeMode', $event.value)"
+          return-object
+        ></v-select>
+      </v-row>
     </v-container>
   </v-card>
 </template>
@@ -29,7 +42,22 @@ export default {
   name: "GameActions",
 
   data() {
-    return {};
+    return {
+      defaultVal: {
+        name: "None",
+        value: "0",
+      },
+      modes: [
+        {
+          name: "None",
+          value: "0",
+        },
+        {
+          name: "Move Feedback",
+          value: "1",
+        },
+      ],
+    };
   },
 };
 </script>

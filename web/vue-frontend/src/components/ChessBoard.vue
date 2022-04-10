@@ -1,15 +1,22 @@
 <template>
   <!-- <v-card variant="outlined" min-width="720px" min-height="700px"> -->
-  <v-card darkrounded min-width="280px" min-height="280px">
+  <v-card darkrounded min-width="250px" min-height="250px">
     <v-card-title primary-title class="justify-center">
       <v-icon color="grey">fas fa-chess-board</v-icon>
     </v-card-title>
 
-    <div>
-      <v-overlay :absolute="absolute" :value="outcome != '*'" class="dimmed white--text">
+    <div style="position:relative;">
+      <v-overlay
+        :absolute="absolute"
+        :value="outcome != '*' && outcome != ''"
+        class="dimmed white--text"
+      >
         {{ outcome != "*" ? outcome : "" }}
       </v-overlay>
-      
+      <v-overlay :absolute="absolute" opacity="0.9" :value="overlayInitial">
+        <v-img class="logo" src="/chesspal.svg"></v-img>
+      </v-overlay>
+
       <div v-html="svg" :class="boardClass() + ' ma-auto'"></div>
     </div>
 
@@ -54,16 +61,20 @@ export default {
 
   props: ["svg", "fen", "outcome", "pgn"],
   methods: {
-    boardClass: function() {
+    boardClass: function () {
       switch (this.$vuetify.breakpoint.name) {
-        case "xs": return 'board-xsmall'
-        case "sm": return 'board-small'
-        case "md": return 'board-small'
-        case "lg": return 'board-medium'
-        case "xl": return 'board'
+        case "xs":
+          return "board-xsmall";
+        case "sm":
+          return "board-small";
+        case "md":
+          return "board-small";
+        case "lg":
+          return "board-medium";
+        case "xl":
+          return "board";
       }
-       return 'board'
-      
+      return "board";
     },
     importLichess: async function () {
       const requestOptions = {
@@ -94,44 +105,54 @@ export default {
       showPGN: false,
       copied: false,
       absolute: true,
+      overlayInitial: true,
     };
+  },
+  created: function () {
+    setTimeout(() => {
+      this.overlayInitial = false;
+    }, 2000);
   },
 };
 </script>
 
 <style>
-
 .board {
-    transform: scale(2);
-    transform-origin: 0 0;
-    width: 720px; 
-    height: 720px;
+  transform: scale(2);
+  transform-origin: 0 0;
+  width: 720px;
+  height: 720px;
 }
 
 .board-xsmall {
-  transform: scale(0.8);
-    transform-origin: 0 0;
-    width: 280px; 
-    height: 280px;
+  transform: scale(0.7);
+  transform-origin: 0 0;
+  width: 290px;
+  height: 290px;
 }
 
 .board-small {
-    transform: scale(1);
-    transform-origin: 0 0;
-    width: 350px; 
-    height: 350px;
+  transform: scale(1);
+  transform-origin: 0 0;
+  width: 360px;
+  height: 360px;
 }
 
 .board-medium {
-    transform: scale(1.5);
-    transform-origin: 0 0;
-    width: 525px; 
-    height: 525px;
+  transform: scale(1.5);
+  transform-origin: 0 0;
+  width: 545px;
+  height: 545px;
 }
 
 .dimmed {
   text-align: center;
   font-size: 70pt;
   line-height: 100%;
+}
+
+.logo {
+  width: 250px;
+  filter: invert(100%);
 }
 </style>

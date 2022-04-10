@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -55,14 +57,21 @@ type Player struct {
 }
 
 type Config struct {
-	Address       string              `yaml:"address"`
-	Web           string              `yaml:"web"`
-	GamesFolder   string              `yaml:"gamesFolder"`
-	ArchiveFolder string              `yaml:"archiveFolder"`
-	DgtPort       string              `yaml:"dgtPort"`
-	Engines       map[string]string   `yaml:"engines"`
-	Bots          []player.BotOptions `yaml:"bots"`
-	Eval          Eval                `yaml:"eval"`
+	Address     string `yaml:"address"`
+	Web         string `yaml:"web"`
+	GamesFolder string `yaml:"gamesFolder"`
+	// ArchiveFolder string              `yaml:"archiveFolder"`
+	DgtPort string              `yaml:"dgtPort"`
+	Engines map[string]string   `yaml:"engines"`
+	Bots    []player.BotOptions `yaml:"bots"`
+	Eval    Eval                `yaml:"eval"`
+	RClone  Rclone              `yaml:"rclone"`
+}
+
+type Rclone struct {
+	Remote string `yaml:"remote"`
+	Games  bool   `yaml:"games"`
+	// Archive bool   `yaml:"archive"`
 }
 
 type Eval struct {
@@ -103,7 +112,8 @@ var yellow = color.RGBA{255, 255, 0, 1}
 
 func main() {
 	var configPath string
-	flag.StringVar(&configPath, "config", "/home/windler/projects/chess/chesspal/configs/chesspal.yaml", "Path to config")
+	flag.StringVar(&configPath, "config", "./configs/chesspal.yaml", "Path to config")
+	flag.Parse()
 
 	filename, _ := filepath.Abs(configPath)
 	yamlFile, err := ioutil.ReadFile(filename)
@@ -117,6 +127,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	rcloneAll(*config, true)
 
 	wsUI := ui.NewWS()
 
@@ -159,27 +171,31 @@ func main() {
 
 		err := os.Remove(fmt.Sprintf("%s%s", config.GamesFolder, file))
 		if err != nil {
-			err := os.Remove(fmt.Sprintf("%s%s", config.ArchiveFolder, file))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		return nil
-	})
-
-	e.POST("/history/:id/archive", func(c echo.Context) error {
-		file := c.Param("id")
-		fileName := fmt.Sprintf("%s%s", config.GamesFolder, file)
-		archive := fmt.Sprintf("%s%s", config.ArchiveFolder, file)
-
-		err := os.Rename(fileName, archive)
-		if err != nil {
+			// err := os.Remove(fmt.Sprintf("%s%s", config.ArchiveFolder, file))
+			// if err != nil {
 			log.Fatal(err)
+			// }
 		}
+
+		rcloneAll(*config, false)
 
 		return nil
 	})
+
+	// e.POST("/history/:id/archive", func(c echo.Context) error {
+	// 	file := c.Param("id")
+	// 	fileName := fmt.Sprintf("%s%s", config.GamesFolder, file)
+	// 	archive := fmt.Sprintf("%s%s", config.ArchiveFolder, file)
+
+	// 	err := os.Rename(fileName, archive)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+
+	// 	rcloneAll(*config, false)
+
+	// 	return nil
+	// })
 
 	e.GET("/history", func(c echo.Context) error {
 		files, err := ioutil.ReadDir(config.GamesFolder)
@@ -195,17 +211,17 @@ func main() {
 			}
 		}
 
-		filesArchive, err := ioutil.ReadDir(config.ArchiveFolder)
-		if err != nil {
-			panic(err)
-		}
+		// filesArchive, err := ioutil.ReadDir(config.ArchiveFolder)
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		for _, file := range filesArchive {
-			g := getGame(file, *config, true)
-			if g != nil {
-				games = append(games, *g)
-			}
-		}
+		// for _, file := range filesArchive {
+		// 	g := getGame(file, *config, true)
+		// 	if g != nil {
+		// 		games = append(games, *g)
+		// 	}
+		// }
 
 		c.JSON(http.StatusOK, GameHistory{Games: games})
 
@@ -241,9 +257,8 @@ func main() {
 			switch msg.Action {
 			case MSG_START:
 				if !started {
-					go startGame(msg, wsUI, *config)
+					go startGame(msg, wsUI, *config, ws)
 					started = true
-					sendGameStarted(ws)
 				}
 
 			case MSG_UNDO_N_MOVES:
@@ -274,9 +289,9 @@ func getGame(f fs.FileInfo, config Config, archive bool) *Game {
 	}
 
 	folder := config.GamesFolder
-	if archive {
-		folder = config.ArchiveFolder
-	}
+	// if archive {
+	// 	folder = config.ArchiveFolder
+	// }
 	file := fmt.Sprintf("%s%s", folder, f.Name())
 	contents, err := os.Open(file)
 	if err != nil {
@@ -333,9 +348,11 @@ func sendGameStarted(ws *websocket.Conn) {
 	}
 }
 
-func startGame(msg *Message, ui game.UI, cfg Config) {
+func startGame(msg *Message, ui *ui.WSUI, cfg Config, ws *websocket.Conn) {
 	evals := []game.EvalEngine{}
 
+	ui.Reset()
+	engine.Reset()
 	engine.SetUpsideDown(msg.Options.UpsideDown)
 
 	var white, black game.Player
@@ -368,6 +385,38 @@ func startGame(msg *Message, ui game.UI, cfg Config) {
 		))
 	}
 
+	sendGameStarted(ws)
 	g.Start(currentBoard.String(), evals...)
 	g.Save(cfg.GamesFolder)
+
+	rcloneAll(cfg, false)
+
+	started = false
+}
+
+func rcloneAll(cfg Config, download bool) {
+	if cfg.RClone.Games {
+		rclone(cfg.GamesFolder, cfg.RClone.Remote, "chesspal_games", download)
+	}
+	// if cfg.RClone.Archive {
+	// 	rclone(cfg.ArchiveFolder, cfg.RClone.Remote, "chesspal_archive", download)
+	// }
+}
+
+func rclone(folder, remote, remoteFolder string, download bool) {
+	cmd := exec.Command("rclone", "sync", folder, fmt.Sprintf("%s:%s", remote, remoteFolder))
+	if download {
+		cmd = exec.Command("rclone", "sync", fmt.Sprintf("%s:%s", remote, remoteFolder), folder)
+	}
+
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+
+	if err != nil {
+		log.Println(err, stderr.String())
+	}
 }

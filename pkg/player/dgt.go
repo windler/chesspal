@@ -76,6 +76,12 @@ func (p *DGTEngine) PostionChannel() chan chess.Board {
 	return p.positionChan
 }
 
+func (p *DGTEngine) Reset() {
+	p.colors = []chess.Color{}
+	p.game = nil
+	p.wg = &sync.WaitGroup{}
+}
+
 func (p *DGTEngine) AddColor(color chess.Color) {
 	p.colors = append(p.colors, color)
 }
@@ -125,6 +131,7 @@ func (p *DGTEngine) readLoop() {
 		n, err := p.io.Read(buf)
 		if err != nil {
 			log.Printf("error reading bytes from serial port: %s\n", err)
+			time.Sleep(1 * time.Second)
 		}
 		p.lastUpdateTime = time.Now()
 
@@ -149,6 +156,7 @@ func (p *DGTEngine) readLoop() {
 						if p.isValidMoveInPostion(move, *p.game.Clone().Position(), pieces) {
 							p.game.Move(move)
 							p.wg.Done()
+							log.Printf("Valid move found: %s\n", move)
 							break
 						}
 					}
@@ -198,6 +206,7 @@ func (p *DGT) SetColor(color chess.Color) {
 
 func (p *DGT) MakeMove(game *chess.Game) {
 	p.engine.MakeMove(game)
+	log.Printf("DGT player %s moved\n", p.name)
 }
 
 func (p *DGT) End() {

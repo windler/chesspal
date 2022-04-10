@@ -135,6 +135,10 @@ func (u *WSUI) sendCurentState(ws *websocket.Conn) {
 	}
 }
 
+func (u *WSUI) Reset() {
+	u.currentState = &GameState{}
+}
+
 func (u *WSUI) SendBoard(board chess.Board) {
 	u.currentState = &GameState{
 		SVGPosition: util.GetSVG(board),

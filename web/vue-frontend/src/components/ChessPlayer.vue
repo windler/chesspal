@@ -13,7 +13,7 @@
             :value="name"
             :disabled="locked"
           ></v-text-field>
-        
+
           <v-select
             :items="players"
             item-text="name"
@@ -36,6 +36,20 @@ export default {
     icon() {
       return this.color == "black" ? "fa fa-chess-king" : "far fa-chess-king";
     },
+    players() {
+      var players = [];
+      players.push({
+        name: "Human",
+        value: 0,
+      });
+      for (var i = 0; i < this.bots.length; i++) {
+        players.push({
+          name: this.bots[i].name,
+          value: i + 1,
+        });
+      }
+      return players;
+    },
   },
   data() {
     return {
@@ -43,23 +57,7 @@ export default {
         name: "Human",
         value: 0,
       },
-      players: [
-        {
-          name: "Human",
-          value: 0,
-        },
-      ],
     };
-  },
-  watch: {
-    bots: function () {
-      for (var i = 0; i < this.bots.length; i++) {
-        this.players.push({
-          name: this.bots[i].name,
-          value: i+1,
-        });
-      }
-    },
   },
 
   props: ["color", "locked", "bots", "name"],

@@ -22,18 +22,7 @@
               :disabled="locked"
             />
           </v-col> </v-row
-        ><v-row>
-          <v-select
-            label="Evaluation mode"
-            persistent-hint
-            :items="modes"
-            item-text="name"
-            item-value="value"
-            v-model="defaultVal"
-            v-on:input="$emit('changeMode', $event.value)"
-            return-object
-          ></v-select>
-        </v-row>
+        >
       </v-container>
     </v-card-actions>
   </v-card>
@@ -47,20 +36,6 @@ export default {
   data() {
     return {
       upsideDown: false,
-      defaultVal: {
-        name: "None",
-        value: "0",
-      },
-      modes: [
-        {
-          name: "None",
-          value: "0",
-        },
-        {
-          name: "Move Feedback",
-          value: "1",
-        },
-      ],
     };
   },
 };

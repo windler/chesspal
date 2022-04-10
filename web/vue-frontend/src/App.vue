@@ -1,11 +1,9 @@
 <template>
   <v-app>
     <v-main>
-      <v-overlay opacity="0.9" :value="overlay">
+      <v-app-bar dark>
         <v-img class="logo" src="/chesspal.svg"></v-img>
-      </v-overlay>
-      <v-app-bar dark dense>
-        <v-img width="60px" class="logo" src="/chesspal.svg"></v-img>
+
         <v-tabs align-with-title v-model="tab">
           <v-tab href="#tab-1">
             <v-icon>fas fa-chess-pawn</v-icon>&nbsp;Game
@@ -14,21 +12,30 @@
             <v-icon>fas fa-clock-rotate-left</v-icon>&nbsp;History
           </v-tab>
           <v-tab href="#tab-3">
-            <v-icon>fas fa-box-open</v-icon>&nbsp;Archive
-          </v-tab>
-          <v-tab href="#tab-4">
             <v-icon>fas fa-robot</v-icon>&nbsp;Bot games
           </v-tab>
-          <v-spacer></v-spacer>
-
-          <v-btn icon @click.stop="toggleDarkTheme()">
-            <v-icon>fa fa-moon</v-icon>
-          </v-btn>
-          <v-icon :color="connected ? 'green' : 'red'" class="mx-2"
-            >fa fa-signal</v-icon
-          >
         </v-tabs>
       </v-app-bar>
+
+      <v-footer fixed dark padless>
+        <v-row justify="center" no-gutters>
+          <v-icon class="mx-2" :color="connected ? 'green' : 'red'"
+            >fa fa-signal</v-icon
+          >
+          <v-btn
+            class="my-auto"
+            icon
+            href="https://github.com/windler/chesspal"
+            target="_blank"
+          >
+            <v-icon>fab fa-github</v-icon>
+          </v-btn>
+
+          <v-btn class="my-auto" icon @click.stop="toggleDarkTheme()">
+            <v-icon>fa fa-moon</v-icon>
+          </v-btn>
+        </v-row>
+      </v-footer>
 
       <v-tabs-items v-model="tab">
         <v-tab-item key="1" value="tab-1">
@@ -66,11 +73,12 @@
                   v-on:resign="resign()"
                   class="my-4"
                   v-on:showHint="showHint = true"
+                  v-on:changeMode="evalMode = $event"
                 />
                 <v-dialog
                   overlay-opacity="0.95"
-                  v-model="dialog"
                   max-width="350px"
+                  v-model="startdialog"
                 >
                   <template v-slot:activator="{ on, attrs }">
                     <v-btn
@@ -79,9 +87,11 @@
                       width="100%"
                       v-bind="attrs"
                       v-on="on"
+                      v-show="!started"
                     >
                       New game
                     </v-btn>
+                    
                   </template>
                   <v-container>
                     <v-row class="justify-center">
@@ -112,20 +122,27 @@
                             black.speak = Boolean($event);
                           "
                           :speak="white.speak || black.speak ? 'true' : 'false'"
-                          v-on:changeMode="evalMode = $event"
                           class="my-4"
                         />
                         <v-btn
                           color="primary"
                           width="100%"
-                          @click.stop="startGame(); dialog=false"
+                          @click.stop="startGame()"
                         >
                           Start game
                         </v-btn>
+                        <v-progress-linear
+                          indeterminate
+                          width="100%"
+                          color="primary"
+                          v-if="startSend"
+                          height="20"
+                        ></v-progress-linear>
                       </v-col>
                     </v-row>
                   </v-container>
                 </v-dialog>
+                <div class="my-12"></div>
               </v-col>
             </v-row>
           </v-container>
@@ -139,13 +156,6 @@
           />
         </v-tab-item>
         <v-tab-item key="3" value="tab-3">
-          <GameHistory
-            showArchived="true"
-            showBotGames="true"
-            showHumanGames="true"
-          />
-        </v-tab-item>
-        <v-tab-item key="4" value="tab-4">
           <GameHistory
             showArchived="false"
             showBotGames="true"
@@ -180,7 +190,8 @@ export default {
   },
 
   data: () => ({
-    overlay: true,
+    startdialog: false,
+    startSend: false,
     tab: null,
     showHint: true,
     connection: null,
@@ -250,6 +261,7 @@ export default {
     },
     startGame: function () {
       if (!this.started) {
+        this.startSend = true;
         var msg = JSON.stringify({
           action: "start",
           startOptions: {
@@ -268,9 +280,6 @@ export default {
 
         this.connection.send(msg);
         console.log(msg);
-        this.speak(
-          "Game started! " + this.white.name + " versus " + this.black.name
-        );
       }
     },
     undoMoves: function (n) {
@@ -321,17 +330,17 @@ export default {
   },
 
   created: async function () {
-    setTimeout(() => {
-      this.overlay = false;
-    }, 2000);
-
     const connect = () => {
       this.speech = new SpeechSynthesisUtterance();
       this.voices = window.speechSynthesis.getVoices();
       this.speech.lang = "en";
 
       console.log("Starting connection to WebSocket Server");
-      this.connection = new WebSocket("ws://localhost:8080/ws");
+      var host = location.host;
+      if (process.env.VUE_APP_CHESSPAL_HOST !== undefined) {
+        host = process.env.VUE_APP_CHESSPAL_HOST;
+      }
+      this.connection = new WebSocket("ws://" + host + "/ws");
       var that = this;
 
       this.connection.onmessage = function (event) {
@@ -343,7 +352,10 @@ export default {
         }
 
         if (data.started) {
+          that.speak("Game started!");
           that.started = true;
+          that.startdialog = false;
+          that.startSend = false;
           return;
         }
 
@@ -384,21 +396,27 @@ export default {
 
         that.turn = data.turn;
 
-        if (data.turn == "b") {
-          that.speakMove(
-            that.white,
-            that.movesWhite[movesWhite.length - 1].notation
-          );
-        } else {
-          that.speakMove(
-            that.black,
-            that.movesBlack[movesBlack.length - 1].notation
-          );
+        if (movesBlack.length > 0) {
+          if (data.turn == "b") {
+            that.speakMove(
+              that.white,
+              that.movesWhite[movesWhite.length - 1].notation
+            );
+          } else {
+            that.speakMove(
+              that.black,
+              that.movesBlack[movesBlack.length - 1].notation
+            );
+          }
         }
 
         that.pgn = data.pgn;
         that.fen = data.fen;
         that.outcome = data.outcome;
+
+        if (that.outcome != "*") {
+          that.started = false;
+        }
       };
 
       this.connection.onopen = function () {
@@ -423,7 +441,12 @@ export default {
 };
 </script>
 <style >
+body {
+  overflow: hidden;
+  width: 100vw;
+}
 .logo {
   filter: invert(100%);
+  width: 80px;
 }
 </style>

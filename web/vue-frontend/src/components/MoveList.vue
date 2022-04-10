@@ -7,7 +7,7 @@
 
       <v-container>
         <v-row class="justify-center">
-          <v-col cols="12" sm="6">
+          <v-col cols="6">
             <v-list dense>
               <v-list-item v-for="(move, index) in movesWhite" :key="index"
                 >{{ index + 1 }}:
@@ -21,7 +21,7 @@
               </v-list-item>
             </v-list>
           </v-col>
-          <v-col cols="12" sm="6">
+          <v-col cols="6">
             <v-list dense>
               <v-list-item v-for="(move, index) in movesBlack" :key="index"
                 ><v-icon

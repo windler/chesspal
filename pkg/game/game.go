@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"sync"
 	"time"
 
@@ -118,13 +119,17 @@ func (g *Game) callUIs(action UIAction) {
 	for _, ui := range g.uis {
 		ui.Render(*g.game, action)
 	}
+
+	log.Println("UI update send", action)
 }
 
 func (g *Game) callEvalEngines(engines []EvalEngine) {
 	for _, engine := range engines {
 
 		func(engine EvalEngine, game *chess.Game) {
+			log.Println("Calling eval engine")
 			evaluation := engine.Eval(game)
+			log.Println("Eval engine called")
 
 			g.callUIs(UIAction{
 				Evaluation: &evaluation,

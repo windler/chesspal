@@ -1,0 +1,29 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides: chesspal
+# Required-Start: 
+# Required-Stop: 
+# Default-Start: 2 3 4 5
+# Default-Stop: 
+# Short-Description: chesspal server
+# Description:
+### END INIT INFO
+ 
+case "$1" in
+    start)
+        echo "starting chesspal"
+        # Starte Programm
+        /home/pi/chesspal/chesspal --config=/home/pi/chesspal/configs/chesspal.yaml
+        ;;
+    stop)
+        echo "stoping chesspal"
+        # Beende Programm
+        killall chesspal
+        ;;
+    *)
+        echo "Usage: /etc/init.d/chesspal {start|stop}"
+        exit 1
+        ;;
+esac
+ 
+exit 0
