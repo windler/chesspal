@@ -161,6 +161,7 @@ export default {
       this.getGames();
     },
     importLichess: async function (row) {
+      var win = window.open('', '_blank');
       const requestOptions = {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -171,7 +172,7 @@ export default {
         requestOptions
       );
       const data = await response.json();
-      window.open(data.url, "_blank");
+      win.location = data.url
     },
   },
 

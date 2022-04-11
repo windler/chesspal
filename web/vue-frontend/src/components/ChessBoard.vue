@@ -13,7 +13,7 @@
       >
         {{ outcome != "*" ? outcome : "" }}
       </v-overlay>
-      <v-overlay :absolute="absolute" opacity="0.9" :value="overlayInitial">
+      <v-overlay opacity="0.9" :value="overlayInitial">
         <v-img class="logo" src="/chesspal.svg"></v-img>
       </v-overlay>
 
@@ -77,6 +77,7 @@ export default {
       return "board";
     },
     importLichess: async function () {
+      var win = window.open('', '_blank');
       const requestOptions = {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -87,7 +88,7 @@ export default {
         requestOptions
       );
       const data = await response.json();
-      window.open(data.url, "_blank");
+      win.location = data.url
     },
     copy: function () {
       navigator.clipboard.writeText(this.pgn).then(
