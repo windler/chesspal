@@ -58,6 +58,7 @@ To setup a fresh Raspberry pi using makefile targets, add a `.env` based on `.en
 ```bash
 make release # to generate a new release bundle locally
 make raspi-install-stockfish # if you would like to use stockfish
+make raspi-install-fairy-stockfish # if you would like to use fairy-stockfish
 make raspi-install-chesspal
 make raspi-install-rclone # if you would like to use rclone
 ```

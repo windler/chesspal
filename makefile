@@ -42,6 +42,10 @@ raspi-restart-chesspal:
 	$(call ssh-cmd,"sudo service $(INIT_SCRIPT) stop")
 	$(call ssh-cmd,"sudo service $(INIT_SCRIPT) start")
 
+raspi-apply-config:
+	$(call ssh-copy,configs/chesspal.yaml,/home/pi/chesspal/configs/chesspal.yaml)
+	$(call ssh-cmd,"sudo shutdown -r 0")
+
 raspi-logs-follow: 
 	$(call ssh-cmd,"journalctl -f -u chesspal")
 
@@ -51,8 +55,22 @@ raspi-logs-all:
 raspi-reboot:
 	$(call ssh-cmd,"sudo shutdown -r 0")
 
+raspi-copy-engines: 
+	$(call ssh-cmd,"mkdir -p ~/engines")
+	$(call ssh-copy,$(RPI_ENGINES_FOLDER)/*,~/engines)
+	$(call ssh-cmd,"sudo chmod +x ~/engines/*")
+
 raspi-install-stockfish: 
 	$(call ssh-cmd,"sudo apt-get install stockfish")
+
+raspi-install-fairy-stockfish: 
+	$(call ssh-cmd,"cd /tmp/ \
+	&& rm -rf Fairy-Stockfish \
+	&& git clone https://github.com/ianfab/Fairy-Stockfish \
+	&& cd ./Fairy-Stockfish/src \
+	&& make net \
+	&& make build ARCH=armv7 \
+	&& sudo make install")
 
 raspi-install-rclone:
 	$(call ssh-cmd,"sudo apt install rclone \

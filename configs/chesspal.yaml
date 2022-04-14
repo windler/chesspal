@@ -7,23 +7,48 @@ rclone:
   games: true
 engines:
   stockfish_12: /usr/games/stockfish
+  fairy_stockfish: usr/local/bin/stockfish
 bots:
+  - name: Adrian (fairy 400)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=400
+  - name: Bobby (fairy 600)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=600
+  - name: Cathy (fairy 800)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=800
   - name: Lichess 1
-    engine: stockfish_12
+    engine: fairy_stockfish
     depth: 5
     moveTimeMs: 50
     threads: 1
     options:
     - Skill Level=-9
   - name: Lichess 2
-    engine: stockfish_12
+    engine: fairy_stockfish
     depth: 5
     moveTimeMs: 100
     threads: 1
     options:
     - Skill Level=-5
   - name: Lichess 3
-    engine: stockfish_12
+    engine: fairy_stockfish
     depth: 5
     moveTimeMs: 150
     threads: 1
