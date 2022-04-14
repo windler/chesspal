@@ -51,6 +51,8 @@
                   :fen="fen"
                   :outcome="outcome"
                   :pgn="pgn"
+                  :black="black.name"
+                  :white="white.name"
                   class="my-4"
                 />
               </v-col>
@@ -82,7 +84,6 @@
                 >
                   <template v-slot:activator="{ on, attrs }">
                     <v-btn
-                      :disabled="!connected"
                       color="primary"
                       width="100%"
                       v-bind="attrs"
@@ -91,56 +92,64 @@
                     >
                       New game
                     </v-btn>
-                    
                   </template>
-                  <v-container>
-                    <v-row class="justify-center">
-                      <v-col cols="12">
-                        <ChessPlayer
-                          v-on:nameChange="white.name = $event"
-                          v-on:modeChange="white.mode = $event"
-                          :locked="started"
-                          color="white"
-                          :name="white.name"
-                          :bots="bots"
-                          class="my-4"
-                        />
-                        <ChessPlayer
-                          v-on:nameChange="black.name = $event"
-                          v-on:modeChange="black.mode = $event"
-                          :locked="started"
-                          color="black"
-                          :name="black.name"
-                          class="my-4"
-                          :bots="bots"
-                        />
-                        <SettingsCard
-                          :locked="started"
-                          v-on:upsideDownChange="upsideDown = $event"
-                          v-on:speakChange="
-                            white.speak = Boolean($event);
-                            black.speak = Boolean($event);
-                          "
-                          :speak="white.speak || black.speak ? 'true' : 'false'"
-                          class="my-4"
-                        />
-                        <v-btn
-                          color="primary"
-                          width="100%"
-                          @click.stop="startGame()"
-                        >
-                          Start game
-                        </v-btn>
-                        <v-progress-linear
-                          indeterminate
-                          width="100%"
-                          color="primary"
-                          v-if="startSend"
-                          height="20"
-                        ></v-progress-linear>
-                      </v-col>
-                    </v-row>
-                  </v-container>
+                  <v-card outlined dense>
+                    <v-card-title primary-title class="justify-center">
+                      New game
+                    </v-card-title>
+                    <v-card-actions>
+                      <v-container>
+                        <v-row class="justify-center">
+                          <v-col cols="12">
+                            <ChessPlayer
+                              v-on:modeChange="setPlayer('white', $event)"
+                              :locked="started"
+                              color="white"
+                              :name="white.name"
+                              :bots="bots"
+                              :humans="humans"
+                              class="my-4"
+                            />
+                            <ChessPlayer
+                              v-on:modeChange="setPlayer('black', $event)"
+                              :locked="started"
+                              color="black"
+                              :name="black.name"
+                              class="my-4"
+                              :bots="bots"
+                              :humans="humans"
+                            />
+                            <SettingsCard
+                              :locked="started"
+                              v-on:upsideDownChange="upsideDown = $event"
+                              v-on:speakChange="
+                                white.speak = Boolean($event);
+                                black.speak = Boolean($event);
+                              "
+                              :speak="
+                                white.speak || black.speak ? 'true' : 'false'
+                              "
+                              class="my-4"
+                            />
+                            <v-btn
+                              color="primary"
+                              width="100%"
+                              @click.stop="startGame()"
+                            >
+                              Start game
+                            </v-btn>
+                            <v-progress-linear
+                              indeterminate
+                              width="100%"
+                              color="primary"
+                              v-if="startSend"
+                              height="20"
+                            ></v-progress-linear>
+                          </v-col>
+                        </v-row>
+                      </v-container>
+                    </v-card-actions>
+                  </v-card>
                 </v-dialog>
                 <div class="my-12"></div>
               </v-col>
@@ -207,13 +216,13 @@ export default {
     pawn: 50.0,
     turn: "w",
     black: {
-      name: "black",
       mode: 0,
+      isHuman: true,
       speak: false,
     },
     white: {
-      name: "white",
       mode: 0,
+      isHuman: true,
       speak: false,
     },
     evalMode: 0,
@@ -221,9 +230,23 @@ export default {
     fen: "r5nr/ppk2pp1/7p/2Bp1b2/8/7P/PPP1PPP1/RN2KB1R",
     outcome: "*",
     bots: [],
+    humans: [],
   }),
 
   methods: {
+    setPlayer: function(color, event) {
+      console.log(event.name, event.isHuman, event.value)
+      if (color == "black") {
+        this.black.name = event.name
+        this.black.isHuman = event.isHuman
+        this.black.mode = event.mode
+      }
+       if (color == "white") {
+        this.white.name = event.name
+        this.white.isHuman = event.isHuman
+        this.white.mode = event.mode
+      }
+    },
     toggleDarkTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark;
     },
@@ -268,10 +291,12 @@ export default {
             white: {
               name: this.white.name,
               type: Number(this.white.mode),
+              isHuman: this.white.isHuman,
             },
             black: {
               name: this.black.name,
               type: Number(this.black.mode),
+              isHuman: this.black.isHuman,
             },
             evalMode: 1, //always use eval but only show based on ui // Number(this.evalMode),
             upsideDown: Boolean(this.upsideDown),
@@ -312,12 +337,12 @@ export default {
   },
 
   mounted() {
-    if (localStorage.white) {
-      this.white.name = localStorage.white;
-    }
-    if (localStorage.black) {
-      this.black.name = localStorage.black;
-    }
+    // if (localStorage.white) {
+    //   this.white.name = localStorage.white;
+    // }
+    // if (localStorage.black) {
+    //   this.black.name = localStorage.black;
+    // }
   },
 
   watch: {
@@ -346,8 +371,10 @@ export default {
       this.connection.onmessage = function (event) {
         var data = JSON.parse(event.data);
 
+        console.log(data);
         if (data.bots != null) {
           that.bots = data.bots;
+          that.humans = data.humans;
           return;
         }
 

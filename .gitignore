@@ -20,5 +20,5 @@ games/*.pgn
 games/archive/*.pgn
 .env
 dist/*
-configs/chesspal.dev.yaml
+configs/chesspal.*.yaml
 github_token

@@ -8,6 +8,9 @@ rclone:
 engines:
   stockfish_12: /usr/games/stockfish
   fairy_stockfish: usr/local/bin/stockfish
+humans:
+  - name: White
+  - name: Black
 bots:
   - name: Adrian (fairy 400)
     engine: fairy_stockfish

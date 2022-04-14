@@ -1,5 +1,5 @@
 <template>
-  <v-card shaped>
+  <v-card>
     <v-card-title primary-title class="justify-center">
       <v-icon color="grey">fat fa-gear</v-icon>
     </v-card-title>

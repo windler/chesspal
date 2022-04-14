@@ -35,15 +35,16 @@ raspi-install-chesspal:
 	&& mkdir ~/chesspal \
 	&& mkdir -p ~/games/archive \
 	&& tar -xf /tmp/$(ARM_RELEASE) -C ~/chesspal \
-	&& sudo update-rc.d $(INIT_SCRIPT) defaults \
-	&& sudo shutdown -r 0")
+	&& sudo update-rc.d $(INIT_SCRIPT) defaults")
+	$(call ssh-copy,configs/chesspal.raspi.yaml,/home/pi/chesspal/configs/chesspal.yaml)
+	$(call ssh-cmd,"sudo shutdown -r 0")
 
 raspi-restart-chesspal: 
 	$(call ssh-cmd,"sudo service $(INIT_SCRIPT) stop")
 	$(call ssh-cmd,"sudo service $(INIT_SCRIPT) start")
 
 raspi-apply-config:
-	$(call ssh-copy,configs/chesspal.yaml,/home/pi/chesspal/configs/chesspal.yaml)
+	$(call ssh-copy,configs/chesspal.raspi.yaml,/home/pi/chesspal/configs/chesspal.yaml)
 	$(call ssh-cmd,"sudo shutdown -r 0")
 
 raspi-logs-follow: 

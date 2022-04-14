@@ -5,7 +5,10 @@
       <v-icon color="grey">fas fa-chess-board</v-icon>
     </v-card-title>
 
-    <div style="position:relative;">
+    <div style="position: relative">
+      <p class="text-center ma-2">
+        {{ black }}
+      </p>
       <v-overlay
         :absolute="absolute"
         :value="outcome != '*' && outcome != ''"
@@ -18,6 +21,10 @@
       </v-overlay>
 
       <div v-html="svg" :class="boardClass() + ' ma-auto'"></div>
+      
+      <p class="text-center ma-3">
+        {{ white }}
+      </p>
     </div>
 
     <v-divider class="ma-4"></v-divider>
@@ -59,7 +66,7 @@
 export default {
   name: "ChessBoard",
 
-  props: ["svg", "fen", "outcome", "pgn"],
+  props: ["svg", "fen", "outcome", "pgn", "white", "black"],
   methods: {
     boardClass: function () {
       switch (this.$vuetify.breakpoint.name) {
@@ -77,7 +84,7 @@ export default {
       return "board";
     },
     importLichess: async function () {
-      var win = window.open('', '_blank');
+      var win = window.open("", "_blank");
       const requestOptions = {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -88,7 +95,7 @@ export default {
         requestOptions
       );
       const data = await response.json();
-      win.location = data.url
+      win.location = data.url;
     },
     copy: function () {
       navigator.clipboard.writeText(this.pgn).then(

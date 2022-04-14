@@ -1,5 +1,5 @@
 <template>
-  <v-card shaped>
+  <v-card>
     <v-card-title primary-title class="justify-center">
       <v-icon>{{ icon }}</v-icon>
     </v-card-title>
@@ -7,19 +7,11 @@
     <v-card-actions>
       <v-container fluid>
         <v-row>
-          <v-text-field
-            v-on:input="$emit('nameChange', $event)"
-            label="Name"
-            :value="name"
-            :disabled="locked"
-          ></v-text-field>
-
           <v-select
             :items="players"
             item-text="name"
             item-value="value"
-            v-model="defaultVal"
-            v-on:input="$emit('modeChange', $event.value)"
+            v-on:input="$emit('modeChange', $event)"
             :disabled="locked"
             return-object
           ></v-select>
@@ -38,28 +30,33 @@ export default {
     },
     players() {
       var players = [];
-      players.push({
-        name: "Human",
-        value: 0,
-      });
-      for (var i = 0; i < this.bots.length; i++) {
+
+      var val = 0
+      for (var i = 0; i < this.humans.length; i++) {
         players.push({
-          name: this.bots[i].name,
-          value: i + 1,
+          name: this.humans[i].name,
+          isHuman: true,
+          value: val,
+          mode: i,
         });
+        val++
+      }
+      for (var j = 0; j < this.bots.length; j++) {
+        players.push({
+          name: this.bots[j].name,
+          isHuman: false,
+          value: val,
+          mode: j,
+        });
+        val++
       }
       return players;
     },
   },
   data() {
-    return {
-      defaultVal: {
-        name: "Human",
-        value: 0,
-      },
-    };
+    return {};
   },
 
-  props: ["color", "locked", "bots", "name"],
+  props: ["color", "locked", "bots", "humans", "name"],
 };
 </script>

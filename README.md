@@ -1,5 +1,5 @@
 # Chesspal
-Chesspal is a responsive web server for [USB DGT e-Boards](https://digitalgametechnology.com/products/home-use-e-boards). Its core features are to record chess games and play against configurable AIs. 
+Chesspal is a responsive webserver for [USB DGT e-Boards](https://digitalgametechnology.com/products/home-use-e-boards). Its core features are to record chess games and play against configurable AIs. 
 
 Special thanks to:
 - @notnil ([https://github.com/notnil/chess](https://github.com/notnil/chess)) for an amazing golang based chess package that is used as a basis
@@ -53,7 +53,7 @@ make release
 ## Raspberry pi setup
 The makefile ships with targets to easily setup a fresh Raspian installation. However, the arm binaries can be used for manual installation as well.
 
-To setup a fresh Raspberry pi using makefile targets, add a `.env` based on `.env.example`. A working `golang` and `npm` setup is required. Then you can run the following commands:
+To setup a fresh Raspberry pi using makefile targets, add a `.env` based on `.env.example`. Further, create a config file `configs/chesspal.raspi.yaml`. A working `golang` and `npm` setup is required. Then you can run the following commands:
 
 ```bash
 make release # to generate a new release bundle locally

@@ -52,8 +52,8 @@ type StartOptions struct {
 }
 
 type Player struct {
-	Name string `json:"name"`
-	Type int    `json:"type"`
+	IsHuman bool `json:"isHuman"`
+	Type    int  `json:"type"`
 }
 
 type Config struct {
@@ -64,10 +64,14 @@ type Config struct {
 	DgtPort string              `yaml:"dgtPort"`
 	Engines map[string]string   `yaml:"engines"`
 	Bots    []player.BotOptions `yaml:"bots"`
+	Humans  []Human             `yaml:"humans"`
 	Eval    Eval                `yaml:"eval"`
 	RClone  Rclone              `yaml:"rclone"`
 }
 
+type Human struct {
+	Name string `yaml:"name" json:"name"`
+}
 type Rclone struct {
 	Remote string `yaml:"remote"`
 	Games  bool   `yaml:"games"`
@@ -88,7 +92,8 @@ var engine *player.DGTEngine
 var currentBoard chess.Board
 
 type WSResponse struct {
-	Bots []player.BotOptions `json:"bots"`
+	Bots   []player.BotOptions `json:"bots"`
+	Humans []Human             `json:"humans"`
 }
 
 type GameHistory struct {
@@ -237,7 +242,7 @@ func main() {
 		}
 		defer ws.Close()
 
-		if err := ws.WriteJSON(WSResponse{Bots: config.Bots}); !errors.Is(err, nil) {
+		if err := ws.WriteJSON(WSResponse{Bots: config.Bots, Humans: config.Humans}); !errors.Is(err, nil) {
 			log.Printf("error occurred: %v", err)
 		}
 
@@ -355,19 +360,25 @@ func startGame(msg *Message, ui *ui.WSUI, cfg Config, ws *websocket.Conn) {
 	engine.Reset()
 	engine.SetUpsideDown(msg.Options.UpsideDown)
 
+	log.Printf("Black: %+v, White: %+v", msg.Options.Black, msg.Options.White)
+
 	var white, black game.Player
-	if msg.Options.Black.Type == 0 {
-		black = player.NewDGTPlayer(msg.Options.Black.Name, engine)
+	if msg.Options.Black.IsHuman {
+		i := msg.Options.Black.Type
+		human := cfg.Humans[i]
+		black = player.NewDGTPlayer(human.Name, engine)
 	} else {
-		i := msg.Options.Black.Type - 1
+		i := msg.Options.Black.Type
 		options := cfg.Bots[i]
 		options.Path = cfg.Engines[options.Engine]
 		black = player.NewUCIPlayer(options)
 	}
-	if msg.Options.White.Type == 0 {
-		white = player.NewDGTPlayer(msg.Options.White.Name, engine)
+	if msg.Options.White.IsHuman {
+		i := msg.Options.White.Type
+		human := cfg.Humans[i]
+		white = player.NewDGTPlayer(human.Name, engine)
 	} else {
-		i := msg.Options.White.Type - 1
+		i := msg.Options.White.Type
 		options := cfg.Bots[i]
 		options.Path = cfg.Engines[options.Engine]
 		white = player.NewUCIPlayer(options)
