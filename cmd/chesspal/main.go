@@ -240,7 +240,10 @@ func main() {
 		if !errors.Is(err, nil) {
 			log.Println(err)
 		}
-		defer ws.Close()
+		defer func() {
+			wsUI.RemoveWebsocket(ws)
+			ws.Close()
+		}()
 
 		if err := ws.WriteJSON(WSResponse{Bots: config.Bots, Humans: config.Humans}); !errors.Is(err, nil) {
 			log.Printf("error occurred: %v", err)
@@ -348,6 +351,8 @@ type Started struct {
 }
 
 func sendGameStarted(ws *websocket.Conn) {
+	ws.SetWriteDeadline(time.Now().Add(time.Second * 5))
+
 	if err := ws.WriteJSON(&Started{Started: true}); !errors.Is(err, nil) {
 		log.Printf("error occurred: %v", err)
 	}

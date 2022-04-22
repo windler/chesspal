@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/notnil/chess"
@@ -14,7 +15,7 @@ import (
 )
 
 type WSUI struct {
-	sockets      []*websocket.Conn
+	sockets      map[*websocket.Conn]*sync.Mutex
 	mutex        *sync.Mutex
 	currentState *GameState
 }
@@ -22,7 +23,8 @@ type WSUI struct {
 func NewWS() *WSUI {
 	game := chess.NewGame()
 	return &WSUI{
-		mutex: &sync.Mutex{},
+		mutex:   &sync.Mutex{},
+		sockets: make(map[*websocket.Conn]*sync.Mutex),
 		currentState: &GameState{
 			SVGPosition: util.GetSVG(*game.Position().Board()),
 		},
@@ -30,8 +32,12 @@ func NewWS() *WSUI {
 }
 
 func (u *WSUI) AddWebsocket(ws *websocket.Conn) {
-	u.sendCurentState(ws)
-	u.sockets = append(u.sockets, ws)
+	u.sockets[ws] = &sync.Mutex{}
+	u.sendCurentState(ws, u.sockets[ws])
+}
+
+func (u *WSUI) RemoveWebsocket(ws *websocket.Conn) {
+	delete(u.sockets, ws)
 }
 
 type GameState struct {
@@ -123,16 +129,20 @@ func (u *WSUI) Render(g chess.Game, action game.UIAction) {
 
 	u.currentState.Outcome = g.Outcome().String()
 
-	for _, ws := range u.sockets {
-		u.sendCurentState(ws)
+	for ws, mutex := range u.sockets {
+		go u.sendCurentState(ws, mutex)
 	}
 	u.mutex.Unlock()
 }
 
-func (u *WSUI) sendCurentState(ws *websocket.Conn) {
+func (u *WSUI) sendCurentState(ws *websocket.Conn, mutex *sync.Mutex) {
+	mutex.Lock()
+	ws.SetWriteDeadline(time.Now().Add(time.Second * 5))
+
 	if err := ws.WriteJSON(u.currentState); !errors.Is(err, nil) {
 		log.Printf("error occurred: %v", err)
 	}
+	mutex.Unlock()
 }
 
 func (u *WSUI) Reset() {
@@ -143,7 +153,7 @@ func (u *WSUI) SendBoard(board chess.Board) {
 	u.currentState = &GameState{
 		SVGPosition: util.GetSVG(board),
 	}
-	for _, ws := range u.sockets {
-		u.sendCurentState(ws)
+	for ws, mutex := range u.sockets {
+		go u.sendCurentState(ws, mutex)
 	}
 }

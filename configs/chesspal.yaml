@@ -36,6 +36,62 @@ bots:
     options:
     - UCI_LimitStrength=true
     - UCI_Elo=800
+  - name: Dillan (fairy 900)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=900
+  - name: Etienne (fairy 1000)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=1000
+  - name: Furgy (fairy 1100)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=1100
+  - name: Gerald (fairy 1200)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=1200
+  - name: Herold (fairy 1300)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=1300
+  - name: Indira (fairy 1400)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=1400
+  - name: Jenne (fairy 1500)
+    engine: fairy_stockfish
+    depth: 9
+    moveTimeMs: 500
+    threads: 1
+    options:
+    - UCI_LimitStrength=true
+    - UCI_Elo=1500
   - name: Lichess 1
     engine: fairy_stockfish
     depth: 5
@@ -57,6 +113,27 @@ bots:
     threads: 1
     options:
     - Skill Level=-1
+  - name: Lichess 4
+    engine: fairy_stockfish
+    depth: 5
+    moveTimeMs: 200
+    threads: 1
+    options:
+    - Skill Level=3
+  - name: Lichess 5
+    engine: fairy_stockfish
+    depth: 5
+    moveTimeMs: 300
+    threads: 1
+    options:
+    - Skill Level=7
+  - name: Lichess 6
+    engine: fairy_stockfish
+    depth: 8
+    moveTimeMs: 400
+    threads: 1
+    options:
+    - Skill Level=11
 eval:
   engine: stockfish_12
   depth: 20
