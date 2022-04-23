@@ -17,6 +17,8 @@ Special thanks to:
 - use DGT e-board "upside down" (flip ranks and files)
 - clients simply connect via http. You can view and manage your games on any device including smartphone
 
+![chesspal](./assets/chesspal_board.jpg)
+
 ![chesspal](./assets/chesspal1.png)
 
 ![chesspal move feedback](./assets/chesspal2.png)
